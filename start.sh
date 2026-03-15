@@ -90,12 +90,9 @@ LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}' || hostname -I 2>
 
 echo -e "  ${DIM}Logs streaming below — press Ctrl+C to stop all services.${R}"
 echo ""
-echo -e "  URLs (ready in a few seconds):"
-echo -e "    ${C_FE}Admin:${R}   http://localhost:3001"
-[ -n "${LOCAL_IP:-}" ] && echo -e "             http://$LOCAL_IP:3001"
-echo -e "    ${C_PU}Public:${R}  http://localhost:3002"
-[ -n "${LOCAL_IP:-}" ] && echo -e "             http://$LOCAL_IP:3002"
-echo -e "    ${C_BE}API:${R}     http://localhost:4000"
+echo -e "  Admin Panel (ready in a few seconds):"
+echo -e "    http://localhost:3001"
+[ -n "${LOCAL_IP:-}" ] && echo -e "    http://$LOCAL_IP:3001"
 echo ""
 
 wait

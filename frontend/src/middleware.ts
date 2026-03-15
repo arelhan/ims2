@@ -8,6 +8,7 @@ export function middleware(request: NextRequest) {
   const isPublicPage = pathname === '/login' || pathname === '/setup'
 
   if (!token && !isPublicPage) {
+    // No token → go to login (login page will server-redirect to /setup if needed)
     return NextResponse.redirect(new URL('/login', request.url))
   }
   if (token && isPublicPage) {
