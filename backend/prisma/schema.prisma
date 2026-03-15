@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// UserRole: "ADMIN" | "VIEWER"
+// DeviceStatus: "IN_WAREHOUSE" | "ASSIGNED" | "MAINTENANCE" | "RETIRED"
+// FieldType: "TEXT" | "NUMBER" | "DATE" | "BOOLEAN"
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("VIEWER")
+  createdAt    DateTime @default(now())
+}
+
+model Device {
+  id           String    @id @default(cuid())
+  name         String
+  serialNumber String    @unique
+  categoryId   String
+  brandId      String?
+  status       String    @default("IN_WAREHOUSE")
+  purchaseDate DateTime?
+  notes        String?
+  qrCodeUrl    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  category     Category      @relation(fields: [categoryId], references: [id])
+  brand        Brand?        @relation(fields: [brandId], references: [id])
+  assignments  Assignment[]
+  customValues CustomValue[]
+}
+
+model Category {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  description  String?
+  createdAt    DateTime      @default(now())
+  devices      Device[]
+  customFields CustomField[]
+}
+
+model CustomField {
+  id          String   @id @default(cuid())
+  categoryId  String
+  label       String
+  fieldKey    String
+  fieldType   String   @default("TEXT")
+  isRequired  Boolean  @default(false)
+  placeholder String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  category Category      @relation(fields: [categoryId], references: [id])
+  values   CustomValue[]
+
+  @@unique([categoryId, fieldKey])
+}
+
+model CustomValue {
+  id            String @id @default(cuid())
+  deviceId      String
+  customFieldId String
+  value         String
+
+  device      Device      @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  customField CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, customFieldId])
+}
+
+model Brand {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  devices   Device[]
+}
+
+model Personnel {
+  id          String       @id @default(cuid())
+  name        String
+  email       String       @unique
+  department  String
+  phone       String?
+  createdAt   DateTime     @default(now())
+  assignments Assignment[]
+}
+
+model Assignment {
+  id          String    @id @default(cuid())
+  deviceId    String
+  personnelId String
+  assignedAt  DateTime  @default(now())
+  returnedAt  DateTime?
+  notes       String?
+  isActive    Boolean   @default(true)
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  personnel Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+}
