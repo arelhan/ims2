@@ -43,3 +43,6 @@ Thumbs.db
 
 # Prisma
 backend/prisma/generated/
+
+# Runtime (start.sh / stop.sh)
+.ims-run/

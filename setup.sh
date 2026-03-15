@@ -38,6 +38,11 @@ install_node_lts() {
   nvm install 20
   nvm use 20
   ok "Node.js $(node -v) installed via nvm"
+  echo ""
+  echo "  ℹ  nvm was added to ~/.bashrc."
+  echo "     After setup completes, run: source ~/.bashrc"
+  echo "     (or open a new terminal) before using npm commands."
+  echo ""
 }
 
 # ── Ensure a Linux Node.js >= 18 is active ────────────────────────────────
