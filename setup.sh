@@ -86,6 +86,43 @@ ensure_node
 ensure_npm
 echo ""
 
+# ── Create env files if they don't exist ──────────────────────────────────
+setup_env() {
+  # Backend .env
+  if [ ! -f backend/.env ]; then
+    cp backend/.env.example backend/.env
+    # Generate a random JWT_SECRET
+    JWT_SECRET=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#$%^&*' < /dev/urandom | head -c 48 || true)
+    if [ -n "$JWT_SECRET" ]; then
+      sed -i "s|JWT_SECRET=\"change-this-to-a-secure-random-string\"|JWT_SECRET=\"$JWT_SECRET\"|" backend/.env
+    fi
+    ok "backend/.env created"
+  else
+    ok "backend/.env already exists — skipping"
+  fi
+
+  # Frontend .env.local
+  if [ ! -f frontend/.env.local ]; then
+    cp frontend/.env.local.example frontend/.env.local
+    ok "frontend/.env.local created"
+  else
+    ok "frontend/.env.local already exists — skipping"
+  fi
+
+  # Public app .env.local
+  if [ ! -f public-app/.env.local ]; then
+    cp public-app/.env.local.example public-app/.env.local
+    ok "public-app/.env.local created"
+  else
+    ok "public-app/.env.local already exists — skipping"
+  fi
+
+  echo ""
+}
+
+echo "  Setting up environment files..."
+setup_env
+
 # ── Install dependencies ────────────────────────────────────────────────────
 echo "  [1/3] Installing backend dependencies..."
 (cd backend && npm install)
