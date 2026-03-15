@@ -90,9 +90,13 @@ LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}' || hostname -I 2>
 
 echo -e "  ${DIM}Logs streaming below — press Ctrl+C to stop all services.${R}"
 echo ""
-echo -e "  Admin Panel (ready in a few seconds):"
-echo -e "    http://localhost:3001"
-[ -n "${LOCAL_IP:-}" ] && echo -e "    http://$LOCAL_IP:3001"
+if [ -n "${LOCAL_IP:-}" ]; then
+  echo -e "  Uygulamayı açmak için:"
+  echo -e "    ${BOLD}http://$LOCAL_IP:3001${R}  ← ağdaki tüm cihazlardan"
+  echo -e "    http://localhost:3001       ← bu bilgisayardan"
+else
+  echo -e "  Uygulamayı açmak için: http://localhost:3001"
+fi
 echo ""
 
 wait
