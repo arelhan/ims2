@@ -32,7 +32,8 @@ api.interceptors.response.use(
           { method: 'POST', credentials: 'include' }
         )
       } catch { /* backend unreachable — cookie stays but redirect still needed */ }
-      window.location.href = '/login'
+      const next = `${window.location.pathname}${window.location.search}`
+      window.location.href = `/login?next=${encodeURIComponent(next)}`
     }
     return Promise.reject(err)
   }

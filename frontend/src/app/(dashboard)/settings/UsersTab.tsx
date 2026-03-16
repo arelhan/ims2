@@ -2,13 +2,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Shield, Eye, KeyRound, X } from 'lucide-react'
+import { Plus, Trash2, KeyRound, X } from 'lucide-react'
 import { formatDate, normalizeUsername } from '@/lib/utils'
 
 export default function UsersTab() {
   const queryClient = useQueryClient()
   const [showAdd, setShowAdd] = useState(false)
-  const [form, setForm] = useState({ name: '', username: '', password: '', role: 'VIEWER' })
+  const [form, setForm] = useState({ name: '', username: '', password: '' })
   const [createError, setCreateError] = useState('')
   const [resetUserId, setResetUserId] = useState<string | null>(null)
   const [resetInput, setResetInput] = useState('')
@@ -31,7 +31,7 @@ export default function UsersTab() {
     mutationFn: async () => (await api.post('/admin/users', form)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      setForm({ name: '', username: '', password: '', role: 'VIEWER' })
+      setForm({ name: '', username: '', password: '' })
       setShowAdd(false)
       setCreateError('')
     },
@@ -40,12 +40,6 @@ export default function UsersTab() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => api.delete(`/admin/users/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
-  })
-
-  const updateRoleMutation = useMutation({
-    mutationFn: async ({ id, role }: { id: string; role: string }) =>
-      (await api.patch(`/admin/users/${id}`, { role })).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['users'] }),
   })
 
@@ -93,16 +87,6 @@ export default function UsersTab() {
               className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
             <input value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password *" type="password"
               className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
-            <div className="flex gap-2">
-              <button onClick={() => setForm({ ...form, role: 'VIEWER' })}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition ${form.role === 'VIEWER' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
-                <Eye size={13} /> Viewer
-              </button>
-              <button onClick={() => setForm({ ...form, role: 'ADMIN' })}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition ${form.role === 'ADMIN' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'}`}>
-                <Shield size={13} /> Admin
-              </button>
-            </div>
           </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => createMutation.mutate()} disabled={!form.name || !form.username || !form.password || createMutation.isPending}
@@ -136,11 +120,7 @@ export default function UsersTab() {
                       <p className="text-xs text-slate-400">@{user.username}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <select value={user.role} onChange={e => updateRoleMutation.mutate({ id: user.id, role: e.target.value })}
-                        className="border border-slate-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white">
-                        <option value="ADMIN">Admin</option>
-                        <option value="VIEWER">Viewer</option>
-                      </select>
+                      <span className="border border-slate-200 rounded-lg px-2 py-1 text-xs bg-slate-50 text-slate-600">Admin</span>
                       <span className="text-xs text-slate-400 hidden sm:block">{formatDate(user.createdAt)}</span>
                       <button onClick={() => openReset(user.id)} title="Reset password"
                         className="p-1.5 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition">

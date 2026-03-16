@@ -7,7 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// UserRole: "ADMIN" | "VIEWER"
+// UserRole: "ADMIN"
 // DeviceStatus: "IN_WAREHOUSE" | "ASSIGNED" | "MAINTENANCE" | "RETIRED"
 // FieldType: "TEXT" | "NUMBER" | "DATE" | "BOOLEAN"
 
@@ -16,7 +16,7 @@ model User {
   name             String
   username         String    @unique
   passwordHash     String
-  role             String    @default("VIEWER")
+  role             String    @default("ADMIN")
   createdAt        DateTime  @default(now())
   resetCode        String?
   resetCodeExpiry  DateTime?

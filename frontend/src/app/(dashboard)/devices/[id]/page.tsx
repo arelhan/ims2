@@ -5,13 +5,15 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Edit, Trash2, QrCode, Download } from 'lucide-react'
 import { STATUS_COLORS, STATUS_LABELS, formatDate } from '@/lib/utils'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 export default function DeviceDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [showQR, setShowQR] = useState(false)
   const [assignPersonnelId, setAssignPersonnelId] = useState('')
+  const [personnelSearch, setPersonnelSearch] = useState('')
+  const [showPersonnelOptions, setShowPersonnelOptions] = useState(false)
   const [assignNotes, setAssignNotes] = useState('')
   const [deleteError, setDeleteError] = useState('')
 
@@ -55,6 +57,28 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
       queryClient.invalidateQueries({ queryKey: ['devices'] })
     },
   })
+
+  const filteredPersonnel = useMemo(() => {
+    const allPersonnel = personnel as any[]
+    const q = personnelSearch.trim().toLowerCase()
+
+    if (!q) return allPersonnel.slice(0, 12)
+
+    return allPersonnel
+      .filter((p: any) => {
+        const name = (p.name || '').toLowerCase()
+        const department = (p.department?.name || '').toLowerCase()
+        return name.includes(q) || department.includes(q)
+      })
+      .slice(0, 12)
+  }, [personnel, personnelSearch])
+
+  function selectPersonnel(p: any) {
+    const departmentName = p.department?.name || '—'
+    setAssignPersonnelId(p.id)
+    setPersonnelSearch(`${p.name} (${departmentName})`)
+    setShowPersonnelOptions(false)
+  }
 
   if (isLoading) return <div className="p-8 text-slate-400">Loading...</div>
   if (!device) return <div className="p-8 text-slate-400">Device not found</div>
@@ -212,13 +236,48 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
               <h3 className="font-semibold text-slate-900 mb-3 text-sm">Assign Device</h3>
               <div className="space-y-2">
-                <select value={assignPersonnelId} onChange={e => setAssignPersonnelId(e.target.value)}
-                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white">
-                  <option value="">Select person</option>
-                  {(personnel as any[]).map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.department?.name || '—'})</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    value={personnelSearch}
+                    onFocus={() => setShowPersonnelOptions(true)}
+                    onBlur={() => setShowPersonnelOptions(false)}
+                    onChange={e => {
+                      setPersonnelSearch(e.target.value)
+                      setAssignPersonnelId('')
+                      setShowPersonnelOptions(true)
+                    }}
+                    placeholder="Search person or department"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                  />
+
+                  {showPersonnelOptions && (
+                    <div className="absolute z-20 mt-1 w-full max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+                      {filteredPersonnel.length > 0 ? (
+                        filteredPersonnel.map((p: any) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onMouseDown={e => {
+                              e.preventDefault()
+                              selectPersonnel(p)
+                            }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50"
+                          >
+                            <span className="font-medium text-slate-900">{p.name}</span>
+                            <span className="text-slate-500"> ({p.department?.name || '—'})</span>
+                          </button>
+                        ))
+                      ) : (
+                        <p className="px-3 py-2 text-sm text-slate-500">No personnel found</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {assignPersonnelId && (
+                  <p className="text-xs text-green-700">Person selected.</p>
+                )}
+
                 <input value={assignNotes} onChange={e => setAssignNotes(e.target.value)}
                   placeholder="Notes (optional)"
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />

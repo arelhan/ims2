@@ -47,6 +47,8 @@ export default async function DevicePage({ params }: { params: { id: string } })
 
   const status = statusConfig[device.status]
   const activeAssignment = device.assignments[0] || null
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001'
+  const adminDeviceUrl = `${frontendUrl}/devices/${device.id}`
 
   return (
     <div className="min-h-screen bg-slate-50 py-8 px-4">
@@ -57,6 +59,12 @@ export default async function DevicePage({ params }: { params: { id: string } })
             <span className="text-white text-xl">📦</span>
           </div>
           <p className="text-slate-500 text-sm font-medium uppercase tracking-wider">Office Inventory</p>
+          <a
+            href={adminDeviceUrl}
+            className="mt-3 inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            Open In Admin Panel
+          </a>
         </div>
 
         {/* Device Card */}

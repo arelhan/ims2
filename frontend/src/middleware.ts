@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
+  const nextParam = request.nextUrl.searchParams.get('next')
 
   const isPublicPage =
     pathname === '/login' ||
@@ -12,10 +13,16 @@ export function middleware(request: NextRequest) {
     pathname === '/reset-password'
 
   if (!token && !isPublicPage) {
-    // No token → go to login (login page will server-redirect to /setup if needed)
-    return NextResponse.redirect(new URL('/login', request.url))
+    // No token -> go to login and keep original target for post-login redirect.
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', `${pathname}${search}`)
+    return NextResponse.redirect(loginUrl)
   }
   if (token && isPublicPage) {
+    const isSafeNext = !!nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
+    if (pathname === '/login' && isSafeNext) {
+      return NextResponse.redirect(new URL(nextParam, request.url))
+    }
     return NextResponse.redirect(new URL('/', request.url))
   }
   return NextResponse.next()

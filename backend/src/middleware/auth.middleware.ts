@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken'
 import { Request, Response, NextFunction } from 'express'
 
 export interface AuthRequest extends Request {
-  user?: { id: string; role: 'ADMIN' | 'VIEWER' }
+  user?: { id: string; role: 'ADMIN' }
 }
 
 export function verifyToken(req: AuthRequest, res: Response, next: NextFunction) {

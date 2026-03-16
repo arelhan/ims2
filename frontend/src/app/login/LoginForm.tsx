@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api'
 
 export default function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -17,7 +18,13 @@ export default function LoginForm() {
     setLoading(true)
     try {
       await api.post('/auth/login', { username, password })
-      router.push('/')
+      const nextPath = searchParams.get('next')
+      const isSafeNext = !!nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
+      if (isSafeNext) {
+        router.push(nextPath)
+      } else {
+        router.push('/')
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed')
     } finally {
