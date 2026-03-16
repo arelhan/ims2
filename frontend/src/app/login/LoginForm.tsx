@@ -1,11 +1,12 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import api from '@/lib/api'
 
 export default function LoginForm() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,7 +16,7 @@ export default function LoginForm() {
     setError('')
     setLoading(true)
     try {
-      await api.post('/auth/login', { email, password })
+      await api.post('/auth/login', { username, password })
       router.push('/')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed')
@@ -43,14 +44,15 @@ export default function LoginForm() {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Username</label>
             <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+              type="text"
+              value={username}
+              onChange={e => setUsername(e.target.value)}
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
-              placeholder="admin@company.com"
+              placeholder="admin"
               required
+              autoComplete="username"
             />
           </div>
 
@@ -63,6 +65,7 @@ export default function LoginForm() {
               className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent"
               placeholder="••••••••"
               required
+              autoComplete="current-password"
             />
           </div>
 
@@ -74,6 +77,12 @@ export default function LoginForm() {
             {loading ? 'Signing in...' : 'Sign in'}
           </button>
         </form>
+
+        <p className="text-center mt-4 text-sm text-slate-500">
+          <Link href="/forgot-password" className="text-slate-700 hover:underline">
+            Forgot password?
+          </Link>
+        </p>
       </div>
     </div>
   )

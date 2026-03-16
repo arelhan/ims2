@@ -19,6 +19,10 @@ export const STATUS_LABELS: Record<string, string> = {
   RETIRED: 'Retired',
 }
 
+export function normalizeUsername(value: string) {
+  return value.toLowerCase().replace(/\s+/g, '')
+}
+
 export const STATUS_COLORS: Record<string, string> = {
   IN_WAREHOUSE: 'bg-blue-100 text-blue-800',
   ASSIGNED: 'bg-green-100 text-green-800',

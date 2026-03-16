@@ -12,12 +12,14 @@ datasource db {
 // FieldType: "TEXT" | "NUMBER" | "DATE" | "BOOLEAN"
 
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("VIEWER")
-  createdAt    DateTime @default(now())
+  id               String    @id @default(cuid())
+  name             String
+  username         String    @unique
+  passwordHash     String
+  role             String    @default("VIEWER")
+  createdAt        DateTime  @default(now())
+  resetCode        String?
+  resetCodeExpiry  DateTime?
 }
 
 model Device {

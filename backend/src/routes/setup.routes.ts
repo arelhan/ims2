@@ -22,9 +22,9 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       return res.status(403).json({ error: 'Setup already completed' })
     }
 
-    const { name, email, password } = req.body
-    if (!name || !email || !password) {
-      return res.status(400).json({ error: 'Name, email and password are required' })
+    const { name, username, password } = req.body
+    if (!name || !username || !password) {
+      return res.status(400).json({ error: 'Name, username and password are required' })
     }
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' })
@@ -32,13 +32,13 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
 
     const passwordHash = await bcrypt.hash(password, 10)
     const user = await prisma.user.create({
-      data: { name, email, passwordHash, role: 'ADMIN' },
+      data: { name, username, passwordHash, role: 'ADMIN' },
     })
 
-    res.status(201).json({ id: user.id, name: user.name, email: user.email })
+    res.status(201).json({ id: user.id, name: user.name, username: user.username })
   } catch (err: any) {
     if (err.code === 'P2002') {
-      return res.status(400).json({ error: 'Email already in use' })
+      return res.status(400).json({ error: 'Username already in use' })
     }
     next(err)
   }

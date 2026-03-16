@@ -2,11 +2,12 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import api from '@/lib/api'
+import { normalizeUsername } from '@/lib/utils'
 import { Package, CheckCircle } from 'lucide-react'
 
 export default function SetupForm() {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ name: '', username: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -26,7 +27,7 @@ export default function SetupForm() {
 
     setLoading(true)
     try {
-      await api.post('/setup', { name: form.name, email: form.email, password: form.password })
+      await api.post('/setup', { name: form.name, username: form.username, password: form.password })
       setDone(true)
       setTimeout(() => router.push('/login'), 2000)
     } catch (err: any) {
@@ -78,14 +79,15 @@ export default function SetupForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email *</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Username *</label>
               <input
-                type="email"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
+                type="text"
+                value={form.username}
+                onChange={e => setForm({ ...form, username: normalizeUsername(e.target.value) })}
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
-                placeholder="admin@company.com"
+                placeholder="admin"
                 required
+                autoComplete="username"
               />
             </div>
 
@@ -98,6 +100,7 @@ export default function SetupForm() {
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                 placeholder="Min. 6 characters"
                 required
+                autoComplete="new-password"
               />
             </div>
 
@@ -110,6 +113,7 @@ export default function SetupForm() {
                 className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
                 placeholder="••••••••"
                 required
+                autoComplete="new-password"
               />
             </div>
 

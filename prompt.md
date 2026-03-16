@@ -47,7 +47,7 @@ backend and frontend architecture.
 
 ### Frontend — Admin Panel (`/frontend`)
 - **Framework**: Next.js 14 (App Router) + TypeScript
-- **Styling**: Tailwind CSS + shadcn/ui
+- **Styling**: Tailwind CSS
 - **State / Data**: TanStack Query v5
 - **Auth**: JWT stored in httpOnly cookie, verified client-side
 - **Icons**: Lucide React
@@ -63,7 +63,7 @@ backend and frontend architecture.
 ---
 
 ## MONOREPO STRUCTURE
-inventory-system/
+ims2/
 ├── backend/
 │   ├── src/
 │   │   ├── controllers/
@@ -89,7 +89,8 @@ inventory-system/
 │   │   │   ├── admin.middleware.ts      ← requireAdmin
 │   │   │   └── error.middleware.ts
 │   │   ├── routes/
-│   │   │   ├── auth.routes.ts
+│   │   │   ├── auth.routes.ts           ← login, logout, me, change-password, forgot-password, reset-password
+│   │   │   ├── setup.routes.ts          ← GET /status, POST / (first-run wizard)
 │   │   │   ├── device.routes.ts
 │   │   │   ├── category.routes.ts
 │   │   │   ├── brand.routes.ts
@@ -102,89 +103,99 @@ inventory-system/
 │   │   │   ├── prisma.ts
 │   │   │   ├── jwt.ts
 │   │   │   └── qr.ts
-│   │   └── index.ts                    ← Express app entry
+│   │   └── index.ts                    ← Express app entry (listens 0.0.0.0, shows Network IP)
 │   ├── prisma/
 │   │   ├── schema.prisma
-│   │   └── seed.ts
-│   ├── uploads/                        ← multer temp dir
-│   ├── .env
+│   │   ├── seed.ts                     ← no-op (setup wizard handles first admin)
+│   │   └── migrations/
+│   ├── .env                            ← created by setup.sh from .env.example
+│   ├── .env.example
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── frontend/                           ← ADMIN PANEL
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── (auth)/
-│   │   │   │   └── login/page.tsx
+│   │   │   ├── login/
+│   │   │   │   ├── page.tsx            ← server component: checks setup status, redirects if needed
+│   │   │   │   └── LoginForm.tsx       ← client form (username + password)
+│   │   │   ├── setup/
+│   │   │   │   ├── page.tsx            ← server component: redirects to /login if already setup
+│   │   │   │   └── SetupForm.tsx       ← client form (name + username + password)
+│   │   │   ├── forgot-password/
+│   │   │   │   └── page.tsx            ← enter username → get reset code shown on screen
+│   │   │   ├── reset-password/
+│   │   │   │   └── page.tsx            ← enter username + code + new password
 │   │   │   └── (dashboard)/
-│   │   │       ├── layout.tsx
+│   │   │       ├── layout.tsx          ← client layout with mobile sidebar
 │   │   │       ├── page.tsx            ← dashboard
 │   │   │       ├── devices/
 │   │   │       ├── personnel/
 │   │   │       ├── assignments/
 │   │   │       └── settings/
-│   │   │           ├── page.tsx        ← tabs: categories/fields/brands/users
+│   │   │           ├── page.tsx        ← tabs: categories / fields / users / account
+│   │   │           ├── CategoriesTab.tsx
+│   │   │           ├── CustomFieldsTab.tsx
+│   │   │           ├── UsersTab.tsx    ← username field, inline admin password reset
+│   │   │           ├── AccountTab.tsx  ← change own password
 │   │   │           └── backup/page.tsx
 │   │   ├── components/
+│   │   │   ├── layout/Sidebar.tsx      ← mobile drawer + desktop static
+│   │   │   └── CustomFieldInput.tsx    ← shared field renderer
 │   │   ├── lib/
-│   │   │   ├── api.ts                  ← axios instance pointing to backend
-│   │   │   └── auth.ts                 ← JWT cookie helpers
-│   │   └── middleware.ts               ← Next.js route protection
-│   ├── .env.local
+│   │   │   ├── api.ts
+│   │   │   └── utils.ts
+│   │   └── middleware.ts               ← protects routes; public: /login /setup /forgot-password /reset-password
+│   ├── .env.local                      ← created by setup.sh
+│   ├── .env.local.example
 │   ├── package.json
 │   └── tsconfig.json
 │
 ├── public-app/                         ← QR SCAN APP (no auth)
 │   ├── src/
 │   │   └── app/
-│   │       ├── layout.tsx              ← minimal layout, no nav
-│   │       ├── page.tsx                ← 404 / redirect
-│   │       └── device/
-│   │           └── [id]/
-│   │               └── page.tsx        ← QR landing page
-│   ├── .env.local
+│   │       ├── layout.tsx
+│   │       ├── page.tsx
+│   │       └── device/[id]/page.tsx    ← QR landing page
+│   ├── .env.local                      ← created by setup.sh
+│   ├── .env.local.example
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── package.json                        ← root workspace scripts
+├── setup.sh                            ← full setup: checks Linux Node via nvm, creates .env files, parallel npm install, migration
+├── start.sh                            ← starts all 3 apps in one terminal with color-prefixed logs
+├── stop.sh                             ← stops all running apps via saved PIDs
+├── .gitignore
+├── .gitattributes                      ← forces LF line endings (important for WSL)
 └── README.md
 
 ---
 
-## DATABASE SCHEMA (Prisma)
+## DATABASE SCHEMA (Prisma — current)
 ```prisma
-// backend/prisma/schema.prisma
-
-generator client {
-  provider = "prisma-client-js"
-}
-
-datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
-}
-
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         UserRole @default(VIEWER)
-  createdAt    DateTime @default(now())
+  id               String    @id @default(cuid())
+  name             String
+  username         String    @unique          // ← login identifier (no email)
+  passwordHash     String
+  role             String    @default("VIEWER")
+  createdAt        DateTime  @default(now())
+  resetCode        String?                    // ← 6-char code for password reset
+  resetCodeExpiry  DateTime?                  // ← valid 15 minutes
 }
 
 model Device {
-  id           String       @id @default(cuid())
+  id           String    @id @default(cuid())
   name         String
-  serialNumber String       @unique
+  serialNumber String    @unique
   categoryId   String
   brandId      String?
-  status       DeviceStatus @default(IN_WAREHOUSE)
+  status       String    @default("IN_WAREHOUSE")
   purchaseDate DateTime?
   notes        String?
   qrCodeUrl    String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   category     Category      @relation(fields: [categoryId], references: [id])
   brand        Brand?        @relation(fields: [brandId], references: [id])
@@ -202,15 +213,15 @@ model Category {
 }
 
 model CustomField {
-  id          String      @id @default(cuid())
+  id          String   @id @default(cuid())
   categoryId  String
   label       String
   fieldKey    String
-  fieldType   FieldType   @default(TEXT)
-  isRequired  Boolean     @default(false)
-  placeholder String?
-  order       Int         @default(0)
-  createdAt   DateTime    @default(now())
+  fieldType   String   @default("TEXT")   // TEXT | TEXTAREA | NUMBER | DATE | BOOLEAN | EMAIL | PHONE | SELECT
+  isRequired  Boolean  @default(false)
+  placeholder String?                     // for SELECT type: stores comma-separated options
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
 
   category Category      @relation(fields: [categoryId], references: [id])
   values   CustomValue[]
@@ -256,529 +267,245 @@ model Assignment {
   notes       String?
   isActive    Boolean   @default(true)
 
-  device    Device    @relation(fields: [deviceId], references: [id])
-  personnel Personnel @relation(fields: [personnelId], references: [id])
-}
-
-enum DeviceStatus {
-  IN_WAREHOUSE
-  ASSIGNED
-  MAINTENANCE
-  RETIRED
-}
-
-enum FieldType {
-  TEXT
-  NUMBER
-  DATE
-  BOOLEAN
-}
-
-enum UserRole {
-  ADMIN
-  VIEWER
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  personnel Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
 }
 ```
 
 ---
 
-## BACKEND — EXPRESS API
+## ALL API ROUTES
 
-### Entry point
-```typescript
-// backend/src/index.ts
-import express from 'express'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
-import authRoutes from './routes/auth.routes'
-import deviceRoutes from './routes/device.routes'
-import categoryRoutes from './routes/category.routes'
-import brandRoutes from './routes/brand.routes'
-import personnelRoutes from './routes/personnel.routes'
-import assignmentRoutes from './routes/assignment.routes'
-import userRoutes from './routes/user.routes'
-import backupRoutes from './routes/backup.routes'
-import publicRoutes from './routes/public.routes'
-import { errorMiddleware } from './middleware/error.middleware'
-
-const app = express()
-
-app.use(cors({
-  origin: [
-    process.env.ADMIN_PANEL_URL!,   // e.g. http://localhost:3001
-    process.env.PUBLIC_APP_URL!,    // e.g. http://localhost:3002
-  ],
-  credentials: true,
-}))
-app.use(express.json())
-app.use(cookieParser())
-
-// Public routes — no auth
-app.use('/api/public', publicRoutes)
-
-// Auth
-app.use('/api/auth', authRoutes)
-
-// Protected routes (JWT required)
-app.use('/api/devices', deviceRoutes)
-app.use('/api/categories', categoryRoutes)
-app.use('/api/brands', brandRoutes)
-app.use('/api/personnel', personnelRoutes)
-app.use('/api/assignments', assignmentRoutes)
-
-// Admin-only routes
-app.use('/api/admin/users', userRoutes)
-app.use('/api/admin/backup', backupRoutes)
-
-app.use(errorMiddleware)
-app.listen(process.env.PORT || 4000)
 ```
-
-### Middleware
-```typescript
-// backend/src/middleware/auth.middleware.ts
-import jwt from 'jsonwebtoken'
-import { Request, Response, NextFunction } from 'express'
-
-export interface AuthRequest extends Request {
-  user?: { id: string; role: 'ADMIN' | 'VIEWER' }
-}
-
-export function verifyToken(req: AuthRequest, res: Response, next: NextFunction) {
-  const token = req.cookies?.token || req.headers.authorization?.split(' ')[1]
-  if (!token) return res.status(401).json({ error: 'Unauthorized' })
-  try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET!) as any
-    next()
-  } catch {
-    res.status(401).json({ error: 'Invalid token' })
-  }
-}
-
-// backend/src/middleware/admin.middleware.ts
-export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction) {
-  if (req.user?.role !== 'ADMIN') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required' })
-  }
-  next()
-}
-```
-
-### Public routes (no auth — QR scan)
-```typescript
-// backend/src/routes/public.routes.ts
-// These endpoints are consumed by /public-app only
-// No JWT required whatsoever
-
-router.get('/devices/:id', publicController.getDeviceById)
-// Returns: device info + category + brand + current assignment
-//          + custom fields with values
-// Does NOT return: internal notes, audit logs, other devices
-```
-
-### All API routes
-// ─── PUBLIC (no auth) ───────────────────────────────────────
+// ─── PUBLIC (no auth) ────────────────────────────────────────
 GET  /api/public/devices/:id          ← QR scan landing data
-// ─── AUTH ───────────────────────────────────────────────────
-POST /api/auth/login                  ← returns JWT in httpOnly cookie
+
+// ─── SETUP (no auth) ─────────────────────────────────────────
+GET  /api/setup/status                ← { needsSetup: boolean }
+POST /api/setup                       ← create first admin (403 if users exist)
+
+// ─── AUTH ────────────────────────────────────────────────────
+POST /api/auth/login                  ← { username, password } → JWT cookie
 POST /api/auth/logout
 GET  /api/auth/me
-// ─── DEVICES (JWT required) ─────────────────────────────────
-GET    /api/devices                   ← ADMIN
-GET    /api/devices/:id               ← ADMIN
-POST   /api/devices                   ← ADMIN (generates QR on creation)
-PUT    /api/devices/:id               ← ADMIN
-DELETE /api/devices/:id               ← ADMIN
-// ─── CATEGORIES (JWT + ADMIN) ───────────────────────────────
-GET    /api/categories                ← ADMIN
-POST   /api/categories                ← ADMIN
-PUT    /api/categories/:id            ← ADMIN
-DELETE /api/categories/:id            ← ADMIN
-// ─── CUSTOM FIELDS (JWT + ADMIN) ────────────────────────────
-GET    /api/categories/:id/fields     ← ADMIN
-POST   /api/categories/:id/fields     ← ADMIN
-PUT    /api/categories/:id/fields/:fid ← ADMIN
-DELETE /api/categories/:id/fields/:fid ← ADMIN
-PATCH  /api/categories/:id/fields/reorder ← ADMIN (drag-to-reorder)
-// ─── BRANDS (JWT + ADMIN) ───────────────────────────────────
-GET    /api/brands                    ← ADMIN
-POST   /api/brands                    ← ADMIN
-PUT    /api/brands/:id                ← ADMIN
-DELETE /api/brands/:id                ← ADMIN
-// ─── PERSONNEL (JWT + ADMIN) ────────────────────────────────
-GET    /api/personnel                 ← ADMIN
-GET    /api/personnel/:id             ← ADMIN
-POST   /api/personnel                 ← ADMIN
-PUT    /api/personnel/:id             ← ADMIN
-DELETE /api/personnel/:id             ← ADMIN
-// ─── ASSIGNMENTS (JWT + ADMIN) ──────────────────────────────
-GET    /api/assignments               ← ADMIN
-POST   /api/assignments               ← ADMIN
-PATCH  /api/assignments/:id/return    ← ADMIN
-// ─── ADMIN: USERS (JWT + ADMIN) ─────────────────────────────
-GET    /api/admin/users               ← ADMIN
-POST   /api/admin/users               ← ADMIN
-PATCH  /api/admin/users/:id           ← ADMIN
-DELETE /api/admin/users/:id           ← ADMIN
-// ─── ADMIN: BACKUP (JWT + ADMIN) ────────────────────────────
-GET    /api/admin/backup/download     ← ADMIN → streams .db file
-POST   /api/admin/backup/restore      ← ADMIN → uploads .db file
-// ─── DASHBOARD (JWT + ADMIN) ────────────────────────────────
+POST /api/auth/change-password        ← { currentPassword, newPassword } (JWT required)
+POST /api/auth/forgot-password        ← { username } → { resetCode } (shown on screen)
+POST /api/auth/reset-password         ← { username, code, newPassword }
+
+// ─── DEVICES (JWT required) ──────────────────────────────────
+GET    /api/devices
+GET    /api/devices/:id
+POST   /api/devices                   ← generates QR on creation
+PUT    /api/devices/:id
+DELETE /api/devices/:id
+
+// ─── CATEGORIES (JWT + ADMIN) ────────────────────────────────
+GET    /api/categories
+POST   /api/categories
+PUT    /api/categories/:id
+DELETE /api/categories/:id
+
+// ─── CUSTOM FIELDS (JWT + ADMIN) ─────────────────────────────
+GET    /api/categories/:id/fields
+POST   /api/categories/:id/fields
+PUT    /api/categories/:id/fields/:fid
+DELETE /api/categories/:id/fields/:fid
+PATCH  /api/categories/:id/fields/reorder
+
+// ─── BRANDS (JWT + ADMIN) ────────────────────────────────────
+GET    /api/brands
+POST   /api/brands
+PUT    /api/brands/:id
+DELETE /api/brands/:id
+
+// ─── PERSONNEL (JWT + ADMIN) ─────────────────────────────────
+GET    /api/personnel
+GET    /api/personnel/:id
+POST   /api/personnel
+PUT    /api/personnel/:id
+DELETE /api/personnel/:id
+
+// ─── ASSIGNMENTS (JWT + ADMIN) ───────────────────────────────
+GET    /api/assignments
+POST   /api/assignments
+PATCH  /api/assignments/:id/return
+
+// ─── ADMIN: USERS (JWT + ADMIN) ──────────────────────────────
+GET    /api/admin/users
+POST   /api/admin/users               ← { name, username, password, role }
+PATCH  /api/admin/users/:id           ← can update name/username/password/role
+DELETE /api/admin/users/:id           ← blocked if last admin
+
+// ─── ADMIN: BACKUP (JWT + ADMIN) ─────────────────────────────
+GET    /api/admin/backup/download
+POST   /api/admin/backup/restore
+
+// ─── DASHBOARD (JWT + ADMIN) ─────────────────────────────────
 GET    /api/dashboard/stats
-
-### QR Code generation
-```typescript
-// backend/src/lib/qr.ts
-import QRCode from 'qrcode'
-
-export async function generateDeviceQR(deviceId: string): Promise<string> {
-  // QR points to the PUBLIC app, not the admin panel
-  const url = `${process.env.PUBLIC_APP_URL}/device/${deviceId}`
-  return QRCode.toDataURL(url, {
-    width: 300,
-    margin: 2,
-    color: { dark: '#0f172a', light: '#ffffff' },
-    errorCorrectionLevel: 'M',
-  })
-}
-// Called automatically in device.service.ts → createDevice()
-// Saved as base64 data URL in device.qrCodeUrl field
-```
-
-### Backup & Restore
-```typescript
-// backend/src/services/backup.service.ts
-import fs from 'fs'
-import path from 'path'
-
-const DB_PATH = path.join(process.cwd(), 'prisma/dev.db')
-
-export function downloadBackup(): Buffer {
-  return fs.readFileSync(DB_PATH)
-}
-
-export function restoreBackup(fileBuffer: Buffer): void {
-  // 1. Validate SQLite magic bytes
-  const magic = fileBuffer.slice(0, 6).toString('ascii')
-  if (magic !== 'SQLite') throw new Error('Invalid SQLite file')
-
-  // 2. Auto-backup current DB before overwrite
-  const safePath = DB_PATH.replace('.db', `-pre-restore-${Date.now()}.db`)
-  fs.copyFileSync(DB_PATH, safePath)
-
-  // 3. Write new DB
-  fs.writeFileSync(DB_PATH, fileBuffer)
-}
-
-// backend/src/controllers/backup.controller.ts
-export async function download(req, res) {
-  const buffer = backupService.downloadBackup()
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  res.setHeader('Content-Type', 'application/octet-stream')
-  res.setHeader('Content-Disposition', `attachment; filename="backup-${timestamp}.db"`)
-  res.send(buffer)
-}
-
-export async function restore(req, res) {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded' })
-  backupService.restoreBackup(req.file.buffer)
-  res.json({ success: true, message: 'Database restored successfully' })
-}
 ```
 
 ---
 
-## FRONTEND — ADMIN PANEL (`/frontend`)
+## FRONTEND PAGES
 
-### Access rules
-- **Only ADMIN users can log in and use the admin panel**
-- VIEWER role users who attempt to log in receive:
-  `403: "Access denied. Admin privileges required."`
-- Middleware redirects unauthenticated requests to `/login`
-```typescript
-// frontend/src/middleware.ts
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
-
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value
-  const isLoginPage = request.nextUrl.pathname === '/login'
-
-  if (!token && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
-  }
-  if (token && isLoginPage) {
-    return NextResponse.redirect(new URL('/', request.url))
-  }
-  return NextResponse.next()
-}
-
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
-}
 ```
-```typescript
-// frontend/src/lib/api.ts
-import axios from 'axios'
-
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL, // http://localhost:4000/api
-  withCredentials: true,                    // send httpOnly cookies
-})
-
-// Auto-logout on 401
-api.interceptors.response.use(
-  res => res,
-  err => {
-    if (err.response?.status === 401) {
-      window.location.href = '/login'
-    }
-    return Promise.reject(err)
-  }
-)
-
-export default api
-```
-
-### Admin Panel Pages
-/login                      Sign in (ADMIN only)
-/                           Dashboard: stats, recent activity, charts
+/login                      Sign in with username + password (ADMIN only)
+                            → Server component: redirects to /setup if no users exist
+/setup                      First-run wizard: create admin account (name, username, password)
+                            → Server component: redirects to /login if already set up
+/forgot-password            Enter username → 6-char reset code shown on screen (15 min valid)
+/reset-password             Enter username + reset code + new password
+/                           Dashboard: device counts, assignment stats
 /devices                    Device list + filters + search
-/devices/new                Add device form (dynamic custom fields)
-/devices/[id]               Device detail (admin view — shows all data)
+/devices/new                Add device form (dynamic custom fields per category)
+/devices/[id]               Device detail (all data, QR code, assignment history)
 /devices/[id]/edit          Edit device
 /personnel                  Personnel list
 /personnel/[id]             Personnel detail + assigned devices
 /assignments                Full assignment audit log
-/settings                   Tabbed settings page:
-Tab 1: Categories          Add/rename/delete categories
-Tab 2: Custom Fields       Select category → add/edit/delete/reorder fields
-Tab 3: Brands              Add/rename/delete brands
-Tab 4: Users               Manage user accounts and roles
-/settings/backup            Backup download + restore UI
-
----
-
-## PUBLIC APP — QR SCAN (`/public-app`)
-
-### Purpose
-- **Single-purpose app**: only exists to show device info when someone scans a QR code
-- No login, no navigation, no sidebar
-- No access to any other data — only the scanned device's info
-- Designed to look clean and informative on a mobile phone screen
-
-### What non-admin users (and anyone) can see after scanning:
-```typescript
-// public-app/src/app/device/[id]/page.tsx
-// Calls: GET /api/public/devices/:id  (no auth required)
-
-// Displayed information:
-// ✅ Device name, category, brand
-// ✅ Serial number
-// ✅ Current status (IN WAREHOUSE / ASSIGNED / MAINTENANCE)
-// ✅ If ASSIGNED → shows: assigned person's name and department
-// ✅ All custom field values (e.g. Domain Name, OS Version, RAM)
-// ✅ QR code image (so user can share or re-print)
-//
-// ❌ NOT shown: notes, purchase date, price, assignment history,
-//              other devices, personnel contact info
-```
-
-### Public device page design
-┌─────────────────────────────────────┐
-│  [Company Logo]                     │
-│                                     │
-│  MacBook Pro 14                     │
-│  Apple  ·  Laptop                   │
-│                                     │
-│  ┌─────────────────────────────┐   │
-│  │  ● ASSIGNED                 │   │
-│  │  John Smith — IT Dept.      │   │
-│  └─────────────────────────────┘   │
-│                                     │
-│  SPECIFICATIONS                     │
-│  Serial No.    MBP-2023-001        │
-│  OS Version    macOS Sonoma 14.4   │
-│  RAM           16 GB               │
-│  Domain        company.local       │
-│                                     │
-│  ┌──────────┐                      │
-│  │ QR Code  │                      │
-│  └──────────┘                      │
-│  [Download QR]                     │
-└─────────────────────────────────────┘
-
-### Backend public endpoint (what it returns)
-```typescript
-// backend/src/controllers/public.controller.ts
-// GET /api/public/devices/:id
-
-const device = await prisma.device.findUnique({
-  where: { id: params.id },
-  select: {
-    id: true,
-    name: true,
-    serialNumber: true,
-    status: true,
-    qrCodeUrl: true,
-    category: { select: { name: true } },
-    brand: { select: { name: true } },
-    customValues: {
-      select: {
-        value: true,
-        customField: { select: { label: true, order: true } }
-      },
-      orderBy: { customField: { order: 'asc' } }
-    },
-    assignments: {
-      where: { isActive: true },
-      select: {
-        assignedAt: true,
-        personnel: {
-          select: { name: true, department: true }  // NO email/phone
-        }
-      },
-      take: 1
-    }
-    // ← NO notes, purchaseDate, updatedAt, history, other fields
-  }
-})
+/settings                   Tabbed settings:
+  Tab: Categories           Add/rename/delete categories
+  Tab: Custom Fields        Per-category fields (label auto-generates fieldKey)
+                            Field types: TEXT, TEXTAREA, NUMBER, DATE, BOOLEAN, EMAIL, PHONE, SELECT
+                            SELECT stores comma-separated options in placeholder column
+  Tab: Users                Manage users (username-based); inline admin password reset;
+                            last admin cannot be deleted
+  Tab: Account              Change own password (current + new + confirm)
+/settings/backup            Download / restore SQLite database
 ```
 
 ---
 
-## QR CODE FLOW (end-to-end)
+## AUTH FLOW
 
-Admin creates a device in /frontend
-│
-▼
-POST /api/devices → device.service.ts
-→ generateDeviceQR(device.id) is called
-→ QR encodes: https://public-app.company.com/device/{id}
-→ QR saved as base64 in device.qrCodeUrl
-│
-▼
-Admin prints QR and sticks it on the physical device
-│
-▼
-Anyone scans QR with phone camera
-│
-▼
-Browser opens: https://public-app.company.com/device/{id}
-→ No login prompt, no redirect
-→ Fetches GET /api/public/devices/{id}
-→ Shows clean device info card
+### Login
+- Username + password (no email)
+- JWT stored in httpOnly cookie (7 days)
+- Only ADMIN role can log in to admin panel
 
+### Setup Wizard (first run)
+- `GET /api/setup/status` → `{ needsSetup: true }` when DB has 0 users
+- Login page (server component) calls this; redirects to `/setup` before rendering
+- `POST /api/setup` creates first ADMIN and is blocked thereafter (403)
+
+### Password Reset (no email server — local network app)
+1. User goes to `/forgot-password`, enters username
+2. Backend generates 6-char alphanumeric code, stores with 15-min expiry
+3. Code is displayed on screen — user notes it down
+4. User goes to `/reset-password`, enters username + code + new password
+5. Code is invalidated after use
+
+### Change Password
+- Settings → Account tab → current password + new password
+
+### Admin Reset
+- Settings → Users → 🔑 button next to any user → set new password inline
 
 ---
 
-## SEED DATA
-```typescript
-// backend/prisma/seed.ts
+## CUSTOM FIELD TYPES
 
-// Users
-// admin@company.com  password: admin123  role: ADMIN
-// viewer@company.com password: view123   role: VIEWER
-//   (VIEWER cannot log into admin panel — only QR pages are accessible to them)
+| Type | UI | Notes |
+|------|----|-------|
+| TEXT | `<input type="text">` | default |
+| TEXTAREA | `<textarea>` | multi-line |
+| NUMBER | `<input type="number">` | |
+| DATE | `<input type="date">` | |
+| BOOLEAN | `<input type="checkbox">` | displays Yes/No in public app |
+| EMAIL | `<input type="email">` | |
+| PHONE | `<input type="tel">` | |
+| SELECT | `<select>` | options stored as comma-separated string in `placeholder` column |
 
-// Brands: Apple, Dell, HP, Logitech, Samsung, Lenovo
+`fieldKey` is auto-generated from label (lowercase, spaces→underscores). No manual input.
 
-// Categories + Custom Fields:
-// Laptop    → OS Version, RAM, Storage, Domain Name, Processor
-// Monitor   → Screen Size, Resolution, Panel Type
-// Phone     → IMEI, Carrier, OS Version
-// Network   → IP Address, MAC Address, Firmware Version
-// Printer   → IP Address, Model Number, Toner Type
+---
 
-// 5 Personnel across IT / Finance / Marketing
-// 15 Devices across all categories with custom values
-// 8 active assignments + 10 historical
+## SETUP & DEPLOYMENT
+
+### Prerequisites
+- Running on Linux / WSL2 (Debian recommended)
+- `curl` (installed automatically if missing)
+- Node.js 18+ — installed automatically via nvm if missing or if Windows npm is detected in PATH
+
+### First-time setup
+```bash
+chmod +x setup.sh start.sh stop.sh
+./setup.sh
 ```
+
+`setup.sh` does:
+1. Detects Windows npm in WSL PATH and installs Linux Node.js 20 via nvm if needed
+2. Creates `.env` / `.env.local` files from examples (auto-generates `JWT_SECRET`)
+3. Runs `npm install` in all 3 packages **in parallel**
+4. Runs `npx prisma migrate deploy`
+
+### Running
+```bash
+./start.sh   # starts backend + frontend + public-app, color-coded logs in one terminal
+./stop.sh    # stops all services (from another terminal)
+# or Ctrl+C in start.sh terminal
+```
+
+### WSL2 — network access from other devices
+Add to `C:\Users\<you>\.wslconfig`:
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+Then run `wsl --shutdown` and reopen WSL.
+Also allow ports in Windows Firewall (run as Admin):
+```powershell
+New-NetFirewallRule -DisplayName "IMS App" -Direction Inbound -Protocol TCP -LocalPort 3001,3002,4000 -Action Allow
+```
+After this, `start.sh` displays the LAN IP and all devices on the network can access the app.
+
+### Line endings (Windows/WSL)
+`.gitattributes` enforces LF for all text files, CRLF for `.bat`/`.cmd`.
+After cloning on Windows: `git add --renormalize .`
 
 ---
 
 ## ENVIRONMENT VARIABLES
+
 ```bash
 # backend/.env
-DATABASE_URL="file:./prisma/dev.db"
-JWT_SECRET="your-super-secret-jwt-key"
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="<auto-generated by setup.sh>"
 PORT=4000
 ADMIN_PANEL_URL="http://localhost:3001"
-PUBLIC_APP_URL="http://localhost:3002"
+PUBLIC_APP_URL=""          # leave empty to auto-detect server LAN IP for QR codes
+PUBLIC_APP_PORT=3002
 
 # frontend/.env.local
-NEXT_PUBLIC_API_URL="http://localhost:4000/api"
+NEXT_PUBLIC_API_URL=http://localhost:4000/api
+BACKEND_URL=http://localhost:4000    # server-side fetch (setup status check)
 
 # public-app/.env.local
-NEXT_PUBLIC_API_URL="http://localhost:4000/api"
+NEXT_PUBLIC_API_URL=/api
+BACKEND_URL=http://localhost:4000
 ```
 
 ---
 
-## GETTING STARTED
-```bash
-# 1. Root setup
-mkdir inventory-system && cd inventory-system
-npm init -y
-# Configure package.json workspaces:
-# "workspaces": ["backend", "frontend", "public-app"]
+## DESIGN SYSTEM
 
-# 2. Backend
-mkdir backend && cd backend
-npm init -y
-npm install express prisma @prisma/client jsonwebtoken bcryptjs
-npm install qrcode multer zod cors cookie-parser
-npm install -D typescript @types/express @types/node ts-node nodemon
-npx prisma init --datasource-provider sqlite
-# → Paste schema, then:
-npx prisma migrate dev --name init
-npx prisma db seed
-cd ..
-
-# 3. Admin Panel
-npx create-next-app@latest frontend --typescript --tailwind --app
-cd frontend
-npx shadcn@latest init
-npm install @tanstack/react-query axios
-cd ..
-
-# 4. Public App
-npx create-next-app@latest public-app --typescript --tailwind --app
-cd public-app
-
-# 5. Run all three
-# Terminal 1: cd backend && npm run dev     → :4000
-# Terminal 2: cd frontend && npm run dev    → :3001
-# Terminal 3: cd public-app && npm run dev  → :3002
-```
-
----
-
-## BUILD ORDER
-
-Build in this exact sequence:
-1. **Prisma schema** → migrate → seed
-2. **Backend middleware** (JWT verify, requireAdmin)
-3. **Backend routes** starting with `/api/public/devices/:id`
-4. **Auth** (login endpoint, cookie flow)
-5. **All admin API routes** (devices, categories, fields, brands, personnel)
-6. **Backup/restore** endpoints
-7. **Public App** (`/public-app`) — device info page only
-8. **Admin Panel** (`/frontend`) — login → dashboard → all pages
-9. **Settings tabs** (categories, custom fields, brands, users)
-10. **Backup UI**
-11. **Polish**: loading skeletons, empty states, mobile layout, toasts
+- All cards: `rounded-2xl` + `border border-slate-200`
+- Inputs: `rounded-xl` + `focus:ring-2 focus:ring-slate-900`
+- Primary button: `bg-slate-900 text-white rounded-xl hover:bg-slate-800`
+- Responsive: mobile-first; sidebar is a slide-in drawer on mobile (`lg:static`)
+- Tables hidden on mobile → replaced with card lists (`hidden md:block` / `md:hidden`)
+- Responsive grid: `grid-cols-1 sm:grid-cols-2`
 
 ---
 
 ## EXTENSIBILITY NOTES (future phases)
 
 - **PostgreSQL**: swap Prisma datasource, run `prisma migrate deploy`
-- **Docker Compose**: containerize all three apps + reverse proxy with Nginx
+- **Docker Compose**: containerize all three apps + Nginx reverse proxy
 - **Email notifications**: nodemailer when device is assigned/returned
-- **PDF export**: `@react-pdf/renderer` for device lists and assignment reports
+- **PDF export**: `@react-pdf/renderer` for device lists and reports
 - **CSV import**: bulk device registration via spreadsheet
-- **Mobile QR scanner**: `html5-qrcode` camera scanning in public-app
+- **Mobile QR scanner**: `html5-qrcode` in public-app
 - **Maintenance logs**: timestamped per-session notes
 - **Depreciation**: purchase price + calculated book value
 - **Multi-tenant**: company-scoped data with subdomain routing

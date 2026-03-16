@@ -128,21 +128,23 @@ setup_env() {
 echo "  Setting up environment files..."
 setup_env
 
-# ── Install dependencies ────────────────────────────────────────────────────
-echo "  [1/3] Installing backend dependencies..."
-(cd backend && npm install)
+# ── Install dependencies (parallel) ──────────────────────────────────────────
+echo "  Installing dependencies (backend + frontend + public-app in parallel)..."
+echo ""
+
+(cd backend    && npm install 2>&1 | sed 's/^/  [backend]    /' ) &  PID_BE=$!
+(cd frontend   && npm install 2>&1 | sed 's/^/  [frontend]   /' ) &  PID_FE=$!
+(cd public-app && npm install 2>&1 | sed 's/^/  [public-app] /' ) &  PID_PU=$!
+
+wait $PID_BE || { echo ""; fail "backend npm install failed"; }
+wait $PID_FE || { echo ""; fail "frontend npm install failed"; }
+wait $PID_PU || { echo ""; fail "public-app npm install failed"; }
+
+ok "All dependencies installed"
 
 echo ""
-echo "  [1/3] Running database migrations..."
+echo "  Running database migrations..."
 (cd backend && npx prisma migrate deploy)
-
-echo ""
-echo "  [2/3] Installing frontend (Admin Panel)..."
-(cd frontend && npm install)
-
-echo ""
-echo "  [3/3] Installing public app (QR pages)..."
-(cd public-app && npm install)
 
 # ── Detect local network IP ────────────────────────────────────────────────
 LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}' || hostname -I 2>/dev/null | awk '{print $1}' || true)

@@ -5,7 +5,11 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const { pathname } = request.nextUrl
 
-  const isPublicPage = pathname === '/login' || pathname === '/setup'
+  const isPublicPage =
+    pathname === '/login' ||
+    pathname === '/setup' ||
+    pathname === '/forgot-password' ||
+    pathname === '/reset-password'
 
   if (!token && !isPublicPage) {
     // No token → go to login (login page will server-redirect to /setup if needed)

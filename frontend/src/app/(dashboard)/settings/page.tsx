@@ -3,13 +3,15 @@ import { useState } from 'react'
 import CategoriesTab from './CategoriesTab'
 import CustomFieldsTab from './CustomFieldsTab'
 import UsersTab from './UsersTab'
+import AccountTab from './AccountTab'
 import Link from 'next/link'
-import { Tag, Sliders, Users, HardDrive } from 'lucide-react'
+import { Tag, Sliders, Users, HardDrive, KeyRound } from 'lucide-react'
 
 const tabs = [
   { id: 'categories', label: 'Categories', icon: Tag, desc: 'Manage device categories' },
   { id: 'fields', label: 'Custom Fields', icon: Sliders, desc: 'Per-category custom fields' },
   { id: 'users', label: 'Users', icon: Users, desc: 'Admin accounts' },
+  { id: 'account', label: 'Account', icon: KeyRound, desc: 'Change your password' },
 ]
 
 export default function SettingsPage() {
@@ -64,6 +66,7 @@ export default function SettingsPage() {
           {activeTab === 'categories' && <CategoriesTab />}
           {activeTab === 'fields' && <CustomFieldsTab />}
           {activeTab === 'users' && <UsersTab />}
+          {activeTab === 'account' && <AccountTab />}
         </div>
       </div>
     </div>
