@@ -128,17 +128,11 @@ setup_env() {
 echo "  Setting up environment files..."
 setup_env
 
-# ── Install dependencies (parallel) ──────────────────────────────────────────
-echo "  Installing dependencies (backend + frontend + public-app in parallel)..."
+# ── Install dependencies (single workspace install) ───────────────────────────
+echo "  Installing dependencies (shared via npm workspaces)..."
 echo ""
 
-(cd backend    && npm install 2>&1 | sed 's/^/  [backend]    /' ) &  PID_BE=$!
-(cd frontend   && npm install 2>&1 | sed 's/^/  [frontend]   /' ) &  PID_FE=$!
-(cd public-app && npm install 2>&1 | sed 's/^/  [public-app] /' ) &  PID_PU=$!
-
-wait $PID_BE || { echo ""; fail "backend npm install failed"; }
-wait $PID_FE || { echo ""; fail "frontend npm install failed"; }
-wait $PID_PU || { echo ""; fail "public-app npm install failed"; }
+npm install || fail "npm install failed"
 
 ok "All dependencies installed"
 
