@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
+import DownloadCardButton from './DownloadCardButton'
 
 interface CustomValue {
   value: string
@@ -35,10 +37,10 @@ async function getDevice(id: string): Promise<Device | null> {
 }
 
 const statusConfig = {
-  IN_WAREHOUSE: { label: 'In Warehouse', color: 'bg-blue-100 text-blue-800 border-blue-200' },
-  ASSIGNED: { label: 'Assigned', color: 'bg-green-100 text-green-800 border-green-200' },
-  MAINTENANCE: { label: 'Maintenance', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  RETIRED: { label: 'Retired', color: 'bg-slate-100 text-slate-600 border-slate-200' },
+  IN_WAREHOUSE: { label: 'In Warehouse', color: 'bg-blue-100 text-blue-800 border-blue-200', style: { background: '#dbeafe', color: '#1e40af', borderColor: '#bfdbfe' } },
+  ASSIGNED:     { label: 'Assigned',     color: 'bg-green-100 text-green-800 border-green-200', style: { background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' } },
+  MAINTENANCE:  { label: 'Maintenance',  color: 'bg-amber-100 text-amber-800 border-amber-200', style: { background: '#fef3c7', color: '#92400e', borderColor: '#fde68a' } },
+  RETIRED:      { label: 'Retired',      color: 'bg-slate-100 text-slate-600 border-slate-200', style: { background: '#f1f5f9', color: '#475569', borderColor: '#e2e8f0' } },
 }
 
 export default async function DevicePage({ params }: { params: { id: string } }) {
@@ -47,7 +49,9 @@ export default async function DevicePage({ params }: { params: { id: string } })
 
   const status = statusConfig[device.status]
   const activeAssignment = device.assignments[0] || null
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3001'
+  const hostname = (headers().get('host') || 'localhost:3000').split(':')[0]
+  const adminPort = process.env.FRONTEND_PORT || '3001'
+  const frontendUrl = process.env.FRONTEND_URL || `http://${hostname}:${adminPort}`
   const adminDeviceUrl = `${frontendUrl}/devices/${device.id}`
 
   return (
@@ -68,7 +72,7 @@ export default async function DevicePage({ params }: { params: { id: string } })
         </div>
 
         {/* Device Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div id="device-card" className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
           {/* Device Name & Brand */}
           <div className="p-6 border-b border-slate-100">
             <h1 className="text-2xl font-bold text-slate-900">{device.name}</h1>
@@ -83,10 +87,10 @@ export default async function DevicePage({ params }: { params: { id: string } })
 
           {/* Status Badge */}
           <div className="px-6 py-4 border-b border-slate-100">
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl border ${status.color} w-full`}>
-              <span className="text-sm font-semibold">{status.label}</span>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${status.color} w-full`} style={status.style}>
+              <span className="text-sm font-semibold" style={{ color: status.style.color }}>{status.label}</span>
               {activeAssignment && (
-                <span className="ml-auto text-sm">
+                <span className="ml-auto text-sm" style={{ color: status.style.color }}>
                   {activeAssignment.personnel.name} — {activeAssignment.personnel.department.name}
                 </span>
               )}
@@ -120,22 +124,19 @@ export default async function DevicePage({ params }: { params: { id: string } })
               <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">
                 QR Code
               </h2>
-              <div className="flex flex-col items-center gap-3">
+              <div className="flex justify-center">
                 <img
                   src={device.qrCodeUrl}
                   alt="Device QR Code"
                   className="w-32 h-32 rounded-lg border border-slate-200"
                 />
-                <a
-                  href={device.qrCodeUrl}
-                  download={`qr-${device.serialNumber}.png`}
-                  className="text-sm text-slate-500 hover:text-slate-700 underline"
-                >
-                  Download QR
-                </a>
               </div>
             </div>
           )}
+        </div>
+
+        <div className="mt-4">
+          <DownloadCardButton deviceName={device.name} />
         </div>
 
         <p className="text-center text-xs text-slate-400 mt-6">
