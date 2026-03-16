@@ -86,13 +86,21 @@ model Brand {
   devices   Device[]
 }
 
+model Department {
+  id        String      @id @default(cuid())
+  name      String      @unique
+  createdAt DateTime    @default(now())
+  personnel Personnel[]
+}
+
 model Personnel {
   id          String       @id @default(cuid())
   name        String
   email       String       @unique
-  department  String
+  departmentId String
   phone       String?
   createdAt   DateTime     @default(now())
+  department  Department   @relation(fields: [departmentId], references: [id])
   assignments Assignment[]
 }
 

@@ -12,6 +12,20 @@ export async function getAllDevices(filters: {
     where.OR = [
       { name: { contains: filters.search } },
       { serialNumber: { contains: filters.search } },
+      { category: { name: { contains: filters.search } } },
+      { brand: { name: { contains: filters.search } } },
+      {
+        assignments: {
+          some: {
+            isActive: true,
+            OR: [
+              { personnel: { name: { contains: filters.search } } },
+              { personnel: { email: { contains: filters.search } } },
+              { personnel: { department: { name: { contains: filters.search } } } },
+            ],
+          },
+        },
+      },
     ]
   }
   if (filters.categoryId) where.categoryId = filters.categoryId
@@ -25,7 +39,16 @@ export async function getAllDevices(filters: {
       brand: { select: { id: true, name: true } },
       assignments: {
         where: { isActive: true },
-        include: { personnel: { select: { id: true, name: true, department: true } } },
+        include: {
+          personnel: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              department: { select: { id: true, name: true } },
+            },
+          },
+        },
         take: 1,
       },
     },
@@ -44,7 +67,7 @@ export async function getDeviceById(id: string) {
         orderBy: { customField: { order: 'asc' } },
       },
       assignments: {
-        include: { personnel: true },
+        include: { personnel: { include: { department: { select: { id: true, name: true } } } } },
         orderBy: { assignedAt: 'desc' },
       },
     },

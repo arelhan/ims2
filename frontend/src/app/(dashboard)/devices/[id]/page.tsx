@@ -187,7 +187,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
                   <div key={a.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 border-b border-slate-50 last:border-0 gap-1.5">
                     <div>
                       <p className="text-sm font-medium text-slate-900">{a.personnel?.name}</p>
-                      <p className="text-xs text-slate-400">{a.personnel?.department} · {formatDate(a.assignedAt)}</p>
+                      <p className="text-xs text-slate-400">{a.personnel?.department?.name || '—'} · {formatDate(a.assignedAt)}</p>
                     </div>
                     {a.isActive ? (
                       <div className="flex items-center gap-2">
@@ -216,7 +216,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
                   className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white">
                   <option value="">Select person</option>
                   {(personnel as any[]).map((p: any) => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.department})</option>
+                    <option key={p.id} value={p.id}>{p.name} ({p.department?.name || '—'})</option>
                   ))}
                 </select>
                 <input value={assignNotes} onChange={e => setAssignNotes(e.target.value)}
@@ -236,7 +236,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
             <div className="bg-green-50 border border-green-200 rounded-2xl p-4">
               <p className="text-xs font-semibold text-green-700 uppercase tracking-wider mb-1">Currently Assigned</p>
               <p className="font-semibold text-slate-900">{activeAssignment.personnel?.name}</p>
-              <p className="text-sm text-slate-500">{activeAssignment.personnel?.department}</p>
+              <p className="text-sm text-slate-500">{activeAssignment.personnel?.department?.name || '—'}</p>
               <p className="text-xs text-slate-400 mt-1">Since {formatDate(activeAssignment.assignedAt)}</p>
               <button
                 onClick={() => returnMutation.mutate(activeAssignment.id)}

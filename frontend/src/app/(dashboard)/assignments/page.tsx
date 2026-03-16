@@ -78,7 +78,7 @@ export default function AssignmentsPage() {
                           <Link href={`/personnel/${a.personnel?.id}`} className="text-sm font-medium text-slate-900 hover:underline">
                             {a.personnel?.name}
                           </Link>
-                          <p className="text-xs text-slate-400">{a.personnel?.department}</p>
+                          <p className="text-xs text-slate-400">{a.personnel?.department?.name || '—'}</p>
                         </td>
                         <td className="px-6 py-3 text-sm text-slate-600">{formatDate(a.assignedAt)}</td>
                         <td className="px-6 py-3 text-sm text-slate-400">{a.returnedAt ? formatDate(a.returnedAt) : '—'}</td>
@@ -120,7 +120,7 @@ export default function AssignmentsPage() {
                     <div className="flex items-center justify-between">
                       <Link href={`/personnel/${a.personnel?.id}`} className="text-sm text-slate-700 hover:underline">
                         {a.personnel?.name}
-                        <span className="text-slate-400 ml-1">({a.personnel?.department})</span>
+                        <span className="text-slate-400 ml-1">({a.personnel?.department?.name || '—'})</span>
                       </Link>
                       {a.isActive && (
                         <button onClick={() => returnMutation.mutate(a.id)} className="text-xs text-red-600 hover:underline shrink-0">

@@ -9,13 +9,22 @@ export async function getAllAssignments(filters: { search?: string; isActive?: s
     where.OR = [
       { device: { name: { contains: filters.search } } },
       { personnel: { name: { contains: filters.search } } },
+      { personnel: { department: { name: { contains: filters.search } } } },
+      { device: { serialNumber: { contains: filters.search } } },
     ]
   }
   return prisma.assignment.findMany({
     where,
     include: {
       device: { select: { id: true, name: true, serialNumber: true, category: true } },
-      personnel: { select: { id: true, name: true, department: true, email: true } },
+      personnel: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          department: { select: { id: true, name: true } },
+        },
+      },
     },
     orderBy: { assignedAt: 'desc' },
   })

@@ -28,7 +28,7 @@ export default function PersonnelDetailPage({ params }: { params: { id: string }
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
           <div>
             <p className="text-xs text-slate-400">Department</p>
-            <p className="text-sm font-medium text-slate-900">{person.department}</p>
+            <p className="text-sm font-medium text-slate-900">{person.department?.name || '—'}</p>
           </div>
           <div>
             <p className="text-xs text-slate-400">Email</p>

@@ -24,7 +24,12 @@ export async function getDeviceById(req: Request, res: Response, next: NextFunct
           where: { isActive: true },
           select: {
             assignedAt: true,
-            personnel: { select: { name: true, department: true } },
+            personnel: {
+              select: {
+                name: true,
+                department: { select: { name: true } },
+              },
+            },
           },
           take: 1,
         },

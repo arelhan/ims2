@@ -7,7 +7,7 @@ interface CustomValue {
 
 interface Assignment {
   assignedAt: string
-  personnel: { name: string; department: string }
+  personnel: { name: string; department: { name: string } }
 }
 
 interface Device {
@@ -79,7 +79,7 @@ export default async function DevicePage({ params }: { params: { id: string } })
               <span className="text-sm font-semibold">{status.label}</span>
               {activeAssignment && (
                 <span className="ml-auto text-sm">
-                  {activeAssignment.personnel.name} — {activeAssignment.personnel.department}
+                  {activeAssignment.personnel.name} — {activeAssignment.personnel.department.name}
                 </span>
               )}
             </div>

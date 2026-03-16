@@ -9,6 +9,7 @@ import deviceRoutes from './routes/device.routes'
 import categoryRoutes from './routes/category.routes'
 import brandRoutes from './routes/brand.routes'
 import personnelRoutes from './routes/personnel.routes'
+import departmentRoutes from './routes/department.routes'
 import assignmentRoutes from './routes/assignment.routes'
 import userRoutes from './routes/user.routes'
 import backupRoutes from './routes/backup.routes'
@@ -53,6 +54,7 @@ app.use('/api/devices', deviceRoutes)
 app.use('/api/categories', categoryRoutes)
 app.use('/api/brands', brandRoutes)
 app.use('/api/personnel', personnelRoutes)
+app.use('/api/departments', departmentRoutes)
 app.use('/api/assignments', assignmentRoutes)
 
 // Dashboard stats

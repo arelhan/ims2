@@ -21,3 +21,24 @@ export async function update(req: AuthRequest, res: Response, next: NextFunction
 export async function remove(req: AuthRequest, res: Response, next: NextFunction) {
   try { await personnelService.deletePersonnel(req.params.id); res.json({ success: true }) } catch (err) { next(err) }
 }
+
+export async function downloadTemplate(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    const csv = personnelService.getPersonnelImportTemplateCsv()
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+    res.setHeader('Content-Disposition', 'attachment; filename="personnel-template.csv"')
+    res.send(csv)
+  } catch (err) {
+    next(err)
+  }
+}
+
+export async function bulkImport(req: AuthRequest, res: Response, next: NextFunction) {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'CSV file is required' })
+    const result = await personnelService.importPersonnelFromCsv(req.file.buffer)
+    res.json(result)
+  } catch (err) {
+    next(err)
+  }
+}
