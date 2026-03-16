@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { isSafeRedirectPath } from '@/lib/utils'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
@@ -19,8 +20,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
   if (token && isPublicPage) {
-    const isSafeNext = !!nextParam && nextParam.startsWith('/') && !nextParam.startsWith('//')
-    if (pathname === '/login' && isSafeNext) {
+    if (pathname === '/login' && isSafeRedirectPath(nextParam)) {
       return NextResponse.redirect(new URL(nextParam, request.url))
     }
     return NextResponse.redirect(new URL('/', request.url))

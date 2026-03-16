@@ -46,6 +46,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
       queryClient.invalidateQueries({ queryKey: ['device', params.id] })
       queryClient.invalidateQueries({ queryKey: ['devices'] })
       setAssignPersonnelId('')
+      setPersonnelSearch('')
       setAssignNotes('')
     },
   })

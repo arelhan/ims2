@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import api from '@/lib/api'
+import { isSafeRedirectPath } from '@/lib/utils'
 
 export default function LoginForm() {
   const router = useRouter()
@@ -19,12 +20,7 @@ export default function LoginForm() {
     try {
       await api.post('/auth/login', { username, password })
       const nextPath = searchParams.get('next')
-      const isSafeNext = !!nextPath && nextPath.startsWith('/') && !nextPath.startsWith('//')
-      if (isSafeNext) {
-        router.push(nextPath)
-      } else {
-        router.push('/')
-      }
+      router.push(isSafeRedirectPath(nextPath) ? nextPath : '/')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed')
     } finally {
