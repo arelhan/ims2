@@ -70,7 +70,10 @@ start.bat
 | Mode | Description | How to stop |
 |------|-------------|-------------|
 | **[1] Terminal windows** | Each service opens in its own visible window | Close each window |
-| **[2] Background (hidden)** | Services run silently with no visible window; logs saved to `.ims-run\` | Run `stop.bat` |
+| **[2] Background (hidden)** | Services run silently; logs saved to `.ims-run\` | Run `stop.bat` |
+| **[3] Background + auto-start** | Like [2], but also registers a Task Scheduler task so services start automatically on every login | Run `stop.bat`; to remove auto-start run `unregister-startup.bat` |
+
+> **Note:** Mode [3] requires running `start.bat` as Administrator (right-click → Run as administrator).
 
 ---
 

@@ -19,16 +19,17 @@ if not exist "%PID_DIR%\pids.txt" (
 echo   Servisler durduruluyor...
 
 for /f "usebackq delims=" %%p in ("%PID_DIR%\pids.txt") do (
-    set PID=%%p
-    set PID=!PID: =!
-    if defined PID (
-        taskkill /PID !PID! /T /F >nul 2>&1
+    set "KILL_PID=%%p"
+    set "KILL_PID=!KILL_PID: =!"
+    if defined KILL_PID (
+        taskkill /PID !KILL_PID! /T /F >nul 2>&1
     )
 )
 
-:: node.exe süreçleri de temizle (IMS portlarında takılı kalanlar)
-for %%port in (3001 3002 4000) do (
-    for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr ":%%port "') do (
+:: IMS portlarında kalan süreçleri temizle
+for %%G in (3001 3002 4000) do (
+    set "PORT=%%G"
+    for /f "tokens=5" %%p in ('netstat -ano 2^>nul ^| findstr ":!PORT! "') do (
         taskkill /PID %%p /F >nul 2>&1
     )
 )
