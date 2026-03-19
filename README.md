@@ -39,7 +39,44 @@ ims2/
 - Node.js 18+
 - npm
 
-### 1. Install dependencies
+---
+
+### Quick Start — Linux / macOS / WSL
+
+```bash
+# 1. Install dependencies, set up env files, run migrations
+./setup.sh
+
+# 2. Start all services (Ctrl+C to stop)
+./start.sh
+```
+
+---
+
+### Quick Start — Windows
+
+> Requires [Node.js 18+](https://nodejs.org) installed and available in PATH.
+
+```bat
+:: 1. Install dependencies, set up env files, run migrations
+setup.bat
+
+:: 2. Start all services
+start.bat
+```
+
+`start.bat` asks how you want to run the services:
+
+| Mode | Description | How to stop |
+|------|-------------|-------------|
+| **[1] Terminal windows** | Each service opens in its own visible window | Close each window |
+| **[2] Background (hidden)** | Services run silently with no visible window; logs saved to `.ims-run\` | Run `stop.bat` |
+
+---
+
+### Manual Setup
+
+#### 1. Install dependencies
 
 ```bash
 # Backend
@@ -52,7 +89,7 @@ cd frontend && npm install
 cd public-app && npm install
 ```
 
-### 2. Configure environment variables
+#### 2. Configure environment variables
 
 **Backend** — copy and edit:
 ```bash
@@ -71,14 +108,18 @@ cp backend/.env.example backend/.env
 **Frontend** — copy and edit:
 ```bash
 cp frontend/.env.local.example frontend/.env.local
+# Windows:
+copy frontend\.env.local.example frontend\.env.local
 ```
 
 **Public app** — copy and edit:
 ```bash
 cp public-app/.env.local.example public-app/.env.local
+# Windows:
+copy public-app\.env.local.example public-app\.env.local
 ```
 
-### 3. Set up the database
+#### 3. Set up the database
 
 ```bash
 cd backend
@@ -87,7 +128,7 @@ npx prisma migrate deploy
 
 No seed data is needed. On first launch, the app will redirect to `/setup` where you create your admin account.
 
-### 4. Run the apps
+#### 4. Run the apps
 
 Open three terminals:
 
