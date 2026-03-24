@@ -1,0 +1,64 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "4000:4000"
+    environment:
+      - DATABASE_URL=file:/data/db/prod.db
+      - JWT_SECRET=${JWT_SECRET:-degistir-bunu-guclu-bir-secret-yap}
+      - PORT=4000
+      - NODE_ENV=production
+      - ADMIN_PANEL_URL=${ADMIN_PANEL_URL:-http://localhost:3001}
+      - PUBLIC_APP_URL=${PUBLIC_APP_URL:-http://localhost:3002}
+    volumes:
+      - db_data:/data/db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    ports:
+      - "3001:3001"
+    environment:
+      - BACKEND_URL=http://backend:4000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  public-app:
+    build:
+      context: ./public-app
+      args:
+        NEXT_PUBLIC_API_URL: /api
+    ports:
+      - "3002:3002"
+    environment:
+      - BACKEND_URL=http://backend:4000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  db_data:
