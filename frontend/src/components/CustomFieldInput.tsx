@@ -5,7 +5,7 @@ export function CustomFieldInput({ field, value, onChange }: {
   value: string
   onChange: (val: string) => void
 }) {
-  const cls = "w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+  const cls = "w-full border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
 
   if (field.fieldType === 'BOOLEAN') {
     return (
@@ -13,7 +13,7 @@ export function CustomFieldInput({ field, value, onChange }: {
         type="checkbox"
         checked={value === 'true'}
         onChange={e => onChange(e.target.checked ? 'true' : 'false')}
-        className="w-4 h-4 rounded border-slate-300 accent-slate-900"
+        className="w-4 h-4 rounded border-slate-300 dark:border-slate-600 accent-slate-900 dark:accent-sky-600"
       />
     )
   }
@@ -28,7 +28,7 @@ export function CustomFieldInput({ field, value, onChange }: {
         required={field.isRequired}
         value={value}
         onChange={e => onChange(e.target.value)}
-        className={`${cls} bg-white`}
+        className={cls}
       >
         <option value="">Seçiniz...</option>
         {options.map((opt: string) => (

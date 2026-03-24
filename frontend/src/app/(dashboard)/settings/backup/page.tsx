@@ -66,51 +66,51 @@ export default function BackupPage() {
 
   return (
     <div className="p-4 sm:p-8 max-w-lg space-y-6">
-      <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700">
+      <Link href="/settings" className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300">
         <ArrowLeft size={16} /> Back to Settings
       </Link>
 
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Backup & Restore</h1>
-        <p className="text-slate-500 text-sm mt-1">Veritabanını indir veya geri yükle</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Backup & Restore</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Veritabanını indir veya geri yükle</p>
       </div>
 
       {restoreStatus === 'success' && (
-        <div className="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
+        <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg px-4 py-3 text-sm">
           <CheckCircle size={16} /> {message}
         </div>
       )}
       {restoreStatus === 'error' && (
-        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg px-4 py-3 text-sm">
           <AlertCircle size={16} /> {message}
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
         <div>
-          <h2 className="font-semibold text-slate-900">Backup İndir</h2>
-          <p className="text-sm text-slate-500 mt-1">Mevcut SQLite veritabanını .db dosyası olarak indir.</p>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Backup İndir</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mevcut SQLite veritabanını .db dosyası olarak indir.</p>
         </div>
         <button
           onClick={handleDownload}
           disabled={downloadLoading}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 transition disabled:opacity-50"
+          className="flex items-center gap-2 bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition disabled:opacity-50"
         >
           {downloadLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
           {downloadLoading ? 'İndiriliyor...' : 'Backup İndir'}
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
         <div>
-          <h2 className="font-semibold text-slate-900">Veritabanı Geri Yükle</h2>
-          <p className="text-sm text-slate-500 mt-1">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Veritabanı Geri Yükle</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
             Daha önce indirilen .db dosyasını yükle. Mevcut veritabanı otomatik olarak yedeklenir.
           </p>
         </div>
-        <div className="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center">
-          <Upload size={24} className="mx-auto text-slate-300 mb-2" />
-          <p className="text-sm text-slate-500 mb-3">Bir .db dosyası seç</p>
+        <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 text-center">
+          <Upload size={24} className="mx-auto text-slate-300 dark:text-slate-500 mb-2" />
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Bir .db dosyası seç</p>
           <input
             ref={fileRef}
             type="file"
@@ -122,7 +122,7 @@ export default function BackupPage() {
           />
           <label
             htmlFor="restore-file"
-            className={`inline-flex items-center gap-2 bg-slate-100 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 cursor-pointer transition ${
+            className={`inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-200 dark:hover:bg-slate-600 cursor-pointer transition ${
               restoreStatus === 'loading' ? 'opacity-50 pointer-events-none' : ''
             }`}
           >

@@ -38,53 +38,53 @@ export default function SetupForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-900 rounded-xl mb-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-slate-900 dark:bg-sky-600 rounded-xl mb-4">
             <Package size={22} className="text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Welcome to IMS</h1>
-          <p className="text-slate-500 mt-1 text-sm">Create your admin account to get started</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Welcome to IMS</h1>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 text-sm">Create your admin account to get started</p>
         </div>
 
         {done ? (
-          <div className="bg-white rounded-2xl border border-slate-200 p-8 flex flex-col items-center gap-3 text-center">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-8 flex flex-col items-center gap-3 text-center">
             <CheckCircle size={40} className="text-green-500" />
-            <p className="font-semibold text-slate-900">Setup complete!</p>
-            <p className="text-sm text-slate-500">Redirecting to login...</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Setup complete!</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Redirecting to login...</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
-            <div className="pb-2 border-b border-slate-100">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Step 1 of 1 — Admin Account</p>
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-4">
+            <div className="pb-2 border-b border-slate-100 dark:border-slate-700">
+              <p className="text-xs font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Step 1 of 1 — Admin Account</p>
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm">
+              <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-4 py-3 text-sm">
                 {error}
               </div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name *</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
                 placeholder="John Doe"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Username *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Username *</label>
               <input
                 type="text"
                 value={form.username}
                 onChange={e => setForm({ ...form, username: normalizeUsername(e.target.value) })}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
                 placeholder="admin"
                 required
                 autoComplete="username"
@@ -92,12 +92,12 @@ export default function SetupForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password *</label>
               <input
                 type="password"
                 value={form.password}
                 onChange={e => setForm({ ...form, password: e.target.value })}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
                 placeholder="Min. 6 characters"
                 required
                 autoComplete="new-password"
@@ -105,12 +105,12 @@ export default function SetupForm() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Confirm Password *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm Password *</label>
               <input
                 type="password"
                 value={form.confirm}
                 onChange={e => setForm({ ...form, confirm: e.target.value })}
-                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
                 placeholder="••••••••"
                 required
                 autoComplete="new-password"
@@ -120,7 +120,7 @@ export default function SetupForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-slate-800 transition disabled:opacity-50"
+              className="w-full bg-slate-900 dark:bg-sky-600 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition disabled:opacity-50"
             >
               {loading ? 'Creating account...' : 'Create Admin Account'}
             </button>

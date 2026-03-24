@@ -68,33 +68,33 @@ export default function UsersTab() {
       {/* Add button */}
       {!showAdd && (
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition">
+          className="flex items-center gap-2 bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition">
           <Plus size={15} /> Add User
         </button>
       )}
 
       {/* Add form */}
       {showAdd && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-3">
-          <h3 className="font-semibold text-slate-900 text-sm">New User</h3>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 space-y-3">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-sm">New User</h3>
           {createError && (
-            <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-3 py-2 text-sm">{createError}</div>
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-xl px-3 py-2 text-sm">{createError}</div>
           )}
           <div className="grid grid-cols-2 gap-3">
             <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name *"
-              className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+              className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 dark:bg-slate-700 dark:text-slate-100" />
             <input value={form.username} onChange={e => setForm({ ...form, username: normalizeUsername(e.target.value) })} placeholder="Username *"
-              className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+              className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 dark:bg-slate-700 dark:text-slate-100" />
             <input value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} placeholder="Password *" type="password"
-              className="border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+              className="border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 dark:bg-slate-700 dark:text-slate-100" />
           </div>
           <div className="flex gap-2 pt-1">
             <button onClick={() => createMutation.mutate()} disabled={!form.name || !form.username || !form.password || createMutation.isPending}
-              className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50 transition">
+              className="bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 disabled:opacity-50 transition">
               {createMutation.isPending ? 'Creating...' : 'Create User'}
             </button>
             <button onClick={() => { setShowAdd(false); setCreateError('') }}
-              className="px-4 py-2 border border-slate-200 rounded-xl text-sm text-slate-600 hover:bg-slate-50 transition">
+              className="px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
               Cancel
             </button>
           </div>
@@ -102,35 +102,35 @@ export default function UsersTab() {
       )}
 
       {/* User list */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {(users as any[]).length === 0 ? (
-          <div className="p-10 text-center text-slate-400 text-sm">No users yet</div>
+          <div className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No users yet</div>
         ) : (
-          <div className="divide-y divide-slate-50">
+          <div className="divide-y divide-slate-50 dark:divide-slate-700">
             {(users as any[]).map((user: any) => {
               const isLastAdmin = user.role === 'ADMIN' && adminCount <= 1
               return (
                 <div key={user.id}>
                   <div className="flex items-center gap-4 px-4 py-3.5">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                      <span className="text-xs font-semibold text-slate-600">{user.name?.charAt(0).toUpperCase()}</span>
+                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">{user.name?.charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-900">{user.name}</p>
-                      <p className="text-xs text-slate-400">@{user.username}</p>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{user.name}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500">@{user.username}</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="border border-slate-200 rounded-lg px-2 py-1 text-xs bg-slate-50 text-slate-600">Admin</span>
-                      <span className="text-xs text-slate-400 hidden sm:block">{formatDate(user.createdAt)}</span>
+                      <span className="border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 text-xs bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400">Admin</span>
+                      <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">{formatDate(user.createdAt)}</span>
                       <button onClick={() => openReset(user.id)} title="Reset password"
-                        className="p-1.5 text-slate-300 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition">
+                        className="p-1.5 text-slate-300 dark:text-slate-500 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-lg transition">
                         <KeyRound size={14} />
                       </button>
                       <button
                         onClick={() => { if (confirm('Delete user?')) deleteMutation.mutate(user.id) }}
                         disabled={isLastAdmin}
                         title={isLastAdmin ? 'Cannot delete the last admin' : 'Delete user'}
-                        className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-300 disabled:hover:bg-transparent"
+                        className="p-1.5 text-slate-300 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:text-slate-300 disabled:hover:bg-transparent"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -139,11 +139,11 @@ export default function UsersTab() {
 
                   {/* Inline reset password form */}
                   {resetUserId === user.id && (
-                    <div className="px-4 pb-4 pt-1 bg-amber-50 border-t border-amber-100">
+                    <div className="px-4 pb-4 pt-1 bg-amber-50 dark:bg-amber-900/30 border-t border-amber-100 dark:border-amber-800">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-amber-700">Set new password:</span>
+                        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">Set new password:</span>
                         {resetDone ? (
-                          <span className="text-xs text-green-600 font-medium">Password updated!</span>
+                          <span className="text-xs text-green-600 dark:text-green-400 font-medium">Password updated!</span>
                         ) : (
                           <>
                             <input
@@ -151,7 +151,7 @@ export default function UsersTab() {
                               value={resetInput}
                               onChange={e => { setResetInput(e.target.value); setResetError('') }}
                               placeholder="New password (min 6)"
-                              className="flex-1 border border-amber-200 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white"
+                              className="flex-1 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400 bg-white dark:bg-slate-700 dark:text-slate-100"
                             />
                             <button
                               onClick={() => {
@@ -164,13 +164,13 @@ export default function UsersTab() {
                               Save
                             </button>
                             <button onClick={() => setResetUserId(null)}
-                              className="p-1.5 text-amber-400 hover:text-amber-600 rounded-lg transition">
+                              className="p-1.5 text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 rounded-lg transition">
                               <X size={14} />
                             </button>
                           </>
                         )}
                       </div>
-                      {resetError && <p className="text-xs text-red-600 mt-1">{resetError}</p>}
+                      {resetError && <p className="text-xs text-red-600 dark:text-red-400 mt-1">{resetError}</p>}
                     </div>
                   )}
                 </div>

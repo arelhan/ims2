@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import Link from 'next/link'
 import { useRef, useState } from 'react'
-import { Download, Plus, Search, Trash2, Upload } from 'lucide-react'
+import { ChevronDown, ChevronUp, Download, Search, Trash2, Upload } from 'lucide-react'
 
 type Department = {
   id: string
@@ -88,13 +88,13 @@ export default function PersonnelPage() {
   const queryClient = useQueryClient()
   const fileInputRef = useRef<HTMLInputElement | null>(null)
   const [search, setSearch] = useState('')
-  const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ name: '', email: '', departmentId: '', departmentName: '', phone: '' })
   const [newDepartmentName, setNewDepartmentName] = useState('')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [deleteError, setDeleteError] = useState('')
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
+  const [showTools, setShowTools] = useState(false)
 
   const { data: departments = [], isError: isDepartmentsError, isLoading: isDepartmentsLoading } = useQuery({
     queryKey: ['departments'],
@@ -112,7 +112,6 @@ export default function PersonnelPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['personnel'] })
       queryClient.invalidateQueries({ queryKey: ['departments'] })
-      setShowAdd(false)
       setForm({ name: '', email: '', departmentId: '', departmentName: '', phone: '' })
       setActionMessage('Personnel added successfully')
       setActionError('')
@@ -238,174 +237,81 @@ export default function PersonnelPage() {
 
   const browseLabel = importFile ? importFile.name : 'No file selected'
 
-  const inputCls = "border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900"
+  const inputCls = "border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
 
   if (isDepartmentsError) {
     // Departments endpoint is optional for older backend versions.
-    // Keep personnel actions working with manual department text.
   }
 
   const rows = personnel as Personnel[]
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Personnel</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{rows.length} people</p>
-        </div>
-        <button type="button" onClick={() => setShowAdd(v => !v)}
-          className="flex items-center justify-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition">
-          <Plus size={16} /> Add Person
-        </button>
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Personnel</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{rows.length} people</p>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
-          <p className="text-sm font-medium text-slate-900">Bulk Personnel Import</p>
-          <button
-            type="button"
-            onClick={downloadTemplate}
-            className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 rounded-xl text-sm hover:bg-slate-50"
-          >
-            <Download size={15} /> Download CSV Template
-          </button>
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv,text/csv"
-            onChange={e => setImportFile(e.target.files?.[0] || null)}
-            className="hidden"
-          />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Browse CSV
-          </button>
-          <p className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-500 truncate">{browseLabel}</p>
-          <button
-            type="button"
-            onClick={() => importFile && importMutation.mutate(importFile)}
-            disabled={!importFile || importMutation.isPending}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-          >
-            <Upload size={15} /> {importMutation.isPending ? 'Uploading...' : 'Import'}
-          </button>
-        </div>
-      </div>
-
-      {showDepartmentManager ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3">
-          <p className="text-sm font-medium text-slate-900">Departments</p>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <input
-              value={newDepartmentName}
-              onChange={e => setNewDepartmentName(e.target.value)}
-              placeholder="New department name"
-              className={`${inputCls} flex-1`}
-            />
-            <button
-              type="button"
-              onClick={() => newDepartmentName.trim() && createDepartmentMutation.mutate(newDepartmentName)}
-              disabled={!newDepartmentName.trim() || createDepartmentMutation.isPending}
-              className="px-4 py-2 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50"
-            >
-              Add Department
-            </button>
-          </div>
-          {isDepartmentsLoading ? <p className="text-xs text-slate-400">Loading departments...</p> : null}
-          {departmentRows.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {departmentRows.map(dep => (
-                <div key={dep.id} className="inline-flex items-center gap-2 border border-slate-200 rounded-xl px-3 py-1.5 text-sm">
-                  <span>{dep.name}</span>
-                  <span className="text-xs text-slate-400">{dep._count?.personnel ?? 0}</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (confirm(`Delete department \"${dep.name}\"?`)) deleteDepartmentMutation.mutate(dep.id)
-                    }}
-                    className="text-slate-400 hover:text-red-600"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-amber-50 border border-amber-200 text-amber-700 rounded-2xl px-4 py-3 text-sm">
-          Department API ulasilamiyor. Personel ekleme yine calisir; birim adini manuel girebilirsin.
-        </div>
-      )}
-
-      {showAdd && (
-        <div className="bg-white rounded-2xl border border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900 mb-4">New Personnel</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name *"
-              className={inputCls} />
-            <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" type="email"
-              className={inputCls} />
-            <div className="space-y-2">
-              {!isDepartmentsError && (
-                <select
-                  value={form.departmentId}
-                  onChange={e => setForm({ ...form, departmentId: e.target.value })}
-                  className={`${inputCls} bg-white w-full`}
-                >
-                  <option value="">Select department</option>
-                  {departmentRows.map(dep => (
-                    <option key={dep.id} value={dep.id}>{dep.name}</option>
-                  ))}
-                </select>
-              )}
-              <input
-                value={form.departmentName}
-                onChange={e => setForm({ ...form, departmentName: e.target.value })}
-                placeholder={isDepartmentsError ? 'Department *' : 'Or type a new department'}
-                className={`${inputCls} w-full`}
-              />
-            </div>
-            <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone"
-              className={inputCls} />
-          </div>
-          <div className="flex gap-2 mt-3">
-            <button type="button" onClick={createPerson} disabled={!canCreatePerson}
-              className="bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 disabled:opacity-50">
-              {createMutation.isPending ? 'Adding...' : 'Add'}
-            </button>
-            <button type="button" onClick={() => setShowAdd(false)} className="px-4 py-2 rounded-xl text-sm text-slate-600 hover:bg-slate-100">
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-
-      {deleteError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">{deleteError}</div>
-      )}
-
-      {actionError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">{actionError}</div>
-      )}
-
-      {actionMessage && (
-        <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-2xl px-4 py-3 text-sm">{actionMessage}</div>
-      )}
-
+      {/* Search — at top */}
       <div className="relative">
-        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search personnel..."
-          className="w-full sm:max-w-xs pl-9 pr-3 py-2 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900" />
+          className="w-full sm:max-w-xs pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400" />
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      {/* Add Person form — always visible */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
+        <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">New Personnel</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Full name *"
+            className={inputCls} />
+          <input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="Email *" type="email"
+            className={inputCls} />
+          <div className="space-y-2">
+            {!isDepartmentsError && (
+              <select
+                value={form.departmentId}
+                onChange={e => setForm({ ...form, departmentId: e.target.value })}
+                className={`${inputCls} w-full`}
+              >
+                <option value="">Select department</option>
+                {departmentRows.map(dep => (
+                  <option key={dep.id} value={dep.id}>{dep.name}</option>
+                ))}
+              </select>
+            )}
+            <input
+              value={form.departmentName}
+              onChange={e => setForm({ ...form, departmentName: e.target.value })}
+              placeholder={isDepartmentsError ? 'Department *' : 'Or type a new department'}
+              className={`${inputCls} w-full`}
+            />
+          </div>
+          <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Phone"
+            className={inputCls} />
+        </div>
+        <div className="flex gap-2 mt-3">
+          <button type="button" onClick={createPerson} disabled={!canCreatePerson}
+            className="bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 disabled:opacity-50">
+            {createMutation.isPending ? 'Adding...' : 'Add'}
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      {deleteError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{deleteError}</div>
+      )}
+      {actionError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{actionError}</div>
+      )}
+      {actionMessage && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 rounded-2xl px-4 py-3 text-sm">{actionMessage}</div>
+      )}
+
+      {/* Personnel table */}
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-slate-400">Loading...</div> :
           rows.length === 0 ? <div className="p-12 text-center text-slate-400">No personnel found</div> : (
             <>
@@ -413,27 +319,27 @@ export default function PersonnelPage() {
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-slate-100">
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Department</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Email</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</th>
-                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Devices</th>
+                    <tr className="border-b border-slate-100 dark:border-slate-700">
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Department</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Devices</th>
                       <th className="px-6 py-3"></th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-50">
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-700">
                     {rows.map((p: Personnel) => (
-                      <tr key={p.id} className="hover:bg-slate-50 transition">
+                      <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
                         <td className="px-6 py-3">
-                          <Link href={`/personnel/${p.id}`} className="text-sm font-medium text-slate-900 hover:underline">
+                          <Link href={`/personnel/${p.id}`} className="text-sm font-medium text-slate-900 dark:text-slate-100 hover:underline">
                             {p.name}
                           </Link>
                         </td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{p.department?.name || '—'}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{p.email}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{p.phone || '—'}</td>
-                        <td className="px-6 py-3 text-sm text-slate-600">{p.assignments?.length || 0}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{p.department?.name || '—'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{p.email}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{p.phone || '—'}</td>
+                        <td className="px-6 py-3 text-sm text-slate-600 dark:text-slate-400">{p.assignments?.length || 0}</td>
                         <td className="px-6 py-3 text-right">
                           <button type="button" onClick={() => { if (confirm('Delete this person?')) deleteMutation.mutate(p.id) }}
                             className="text-slate-400 hover:text-red-600 transition">
@@ -447,18 +353,18 @@ export default function PersonnelPage() {
               </div>
 
               {/* Mobile card list */}
-              <div className="md:hidden divide-y divide-slate-100">
+              <div className="md:hidden divide-y divide-slate-100 dark:divide-slate-700">
                 {rows.map((p: Personnel) => (
-                  <div key={p.id} className="flex items-center justify-between p-4 gap-3 hover:bg-slate-50 transition">
+                  <div key={p.id} className="flex items-center justify-between p-4 gap-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
                     <div className="flex-1 min-w-0">
-                      <Link href={`/personnel/${p.id}`} className="text-sm font-semibold text-slate-900 hover:underline">
+                      <Link href={`/personnel/${p.id}`} className="text-sm font-semibold text-slate-900 dark:text-slate-100 hover:underline">
                         {p.name}
                       </Link>
-                      <p className="text-xs text-slate-500 mt-0.5">{p.department?.name || '—'}</p>
-                      <p className="text-xs text-slate-400 truncate">{p.email}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.department?.name || '—'}</p>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 truncate">{p.email}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <span className="text-xs text-slate-500">{p.assignments?.length || 0} devices</span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">{p.assignments?.length || 0} devices</span>
                       <button type="button" onClick={() => { if (confirm('Delete this person?')) deleteMutation.mutate(p.id) }}
                         className="text-slate-400 hover:text-red-600 transition p-1">
                         <Trash2 size={15} />
@@ -469,6 +375,108 @@ export default function PersonnelPage() {
               </div>
             </>
           )}
+      </div>
+
+      {/* Collapsible Tools Section — Bulk Import & Departments */}
+      <div>
+        <button
+          type="button"
+          onClick={() => setShowTools(v => !v)}
+          className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 transition"
+        >
+          {showTools ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          Bulk Import & Departments
+        </button>
+
+        {showTools && (
+          <div className="mt-3 space-y-4">
+            {/* Bulk Import */}
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Bulk Personnel Import</p>
+                <button
+                  type="button"
+                  onClick={downloadTemplate}
+                  className="inline-flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-sm hover:bg-slate-50 dark:hover:bg-slate-700 dark:text-slate-300"
+                >
+                  <Download size={15} /> Download CSV Template
+                </button>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv,text/csv"
+                  onChange={e => setImportFile(e.target.files?.[0] || null)}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="inline-flex items-center justify-center px-4 py-2 border border-slate-200 dark:border-slate-600 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                >
+                  Browse CSV
+                </button>
+                <p className="flex-1 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-slate-500 dark:text-slate-400 truncate">{browseLabel}</p>
+                <button
+                  type="button"
+                  onClick={() => importFile && importMutation.mutate(importFile)}
+                  disabled={!importFile || importMutation.isPending}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-sky-600 text-white rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 disabled:opacity-50"
+                >
+                  <Upload size={15} /> {importMutation.isPending ? 'Uploading...' : 'Import'}
+                </button>
+              </div>
+            </div>
+
+            {/* Department Manager */}
+            {showDepartmentManager ? (
+              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 space-y-3">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Departments</p>
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    value={newDepartmentName}
+                    onChange={e => setNewDepartmentName(e.target.value)}
+                    placeholder="New department name"
+                    className={`${inputCls} flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => newDepartmentName.trim() && createDepartmentMutation.mutate(newDepartmentName)}
+                    disabled={!newDepartmentName.trim() || createDepartmentMutation.isPending}
+                    className="px-4 py-2 bg-slate-900 dark:bg-sky-600 text-white rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 disabled:opacity-50"
+                  >
+                    Add Department
+                  </button>
+                </div>
+                {isDepartmentsLoading ? <p className="text-xs text-slate-400">Loading departments...</p> : null}
+                {departmentRows.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {departmentRows.map(dep => (
+                      <div key={dep.id} className="inline-flex items-center gap-2 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-1.5 text-sm dark:text-slate-300">
+                        <span>{dep.name}</span>
+                        <span className="text-xs text-slate-400">{dep._count?.personnel ?? 0}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm(`Delete department "${dep.name}"?`)) deleteDepartmentMutation.mutate(dep.id)
+                          }}
+                          className="text-slate-400 hover:text-red-600"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 rounded-2xl px-4 py-3 text-sm">
+                Department API ulasilamiyor. Personel ekleme yine calisir; birim adini manuel girebilirsin.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   )

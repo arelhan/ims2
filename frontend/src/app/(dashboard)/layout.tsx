@@ -7,7 +7,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Mobile backdrop */}
@@ -18,16 +18,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         />
       )}
 
-      <main className="flex-1 overflow-auto bg-slate-50 min-w-0">
+      <main className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 min-w-0">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-200 lg:hidden">
+        <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition"
+            className="p-1.5 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-semibold text-slate-900">IMS Admin</span>
+          <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">IMS Admin</span>
         </div>
         {children}
       </main>

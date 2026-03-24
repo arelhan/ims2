@@ -20,14 +20,14 @@ function StatCard({ title, value, icon: Icon, color }: {
   title: string; value: number; icon: any; color: string
 }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5">
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{title}</p>
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${color}`}>
           <Icon size={18} />
         </div>
       </div>
-      <p className="text-3xl font-bold text-slate-900">{value}</p>
+      <p className="text-3xl font-bold text-slate-900 dark:text-slate-100">{value}</p>
     </div>
   )
 }
@@ -43,10 +43,10 @@ export default function DashboardPage() {
     return (
       <div className="p-4 sm:p-6 lg:p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-slate-200 rounded w-48"></div>
+          <div className="h-8 bg-slate-200 dark:bg-slate-700 rounded w-48"></div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-28 bg-slate-200 rounded-2xl"></div>
+              <div key={i} className="h-28 bg-slate-200 dark:bg-slate-700 rounded-2xl"></div>
             ))}
           </div>
         </div>
@@ -57,24 +57,24 @@ export default function DashboardPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">Overview of your inventory</p>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Dashboard</h1>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Overview of your inventory</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4">
-        <StatCard title="Total Devices" value={stats?.totalDevices || 0} icon={Monitor} color="bg-blue-100 text-blue-600" />
-        <StatCard title="Personnel" value={stats?.totalPersonnel || 0} icon={Users} color="bg-violet-100 text-violet-600" />
+        <StatCard title="Total Devices" value={stats?.totalDevices || 0} icon={Monitor} color="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" />
+        <StatCard title="Personnel" value={stats?.totalPersonnel || 0} icon={Users} color="bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400" />
       </div>
 
       {/* Status breakdown */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {['ASSIGNED', 'IN_WAREHOUSE', 'MAINTENANCE', 'RETIRED'].map(status => (
-          <div key={status} className="bg-white rounded-2xl border border-slate-200 p-4 text-center">
+          <div key={status} className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 text-center">
             <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${STATUS_COLORS[status]}`}>
               {STATUS_LABELS[status]}
             </span>
-            <p className="text-2xl font-bold text-slate-900 mt-2">
+            <p className="text-2xl font-bold text-slate-900 dark:text-slate-100 mt-2">
               {status === 'ASSIGNED' ? stats?.assigned
                 : status === 'IN_WAREHOUSE' ? stats?.inWarehouse
                 : status === 'MAINTENANCE' ? stats?.maintenance
@@ -85,27 +85,27 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Devices */}
-      <div className="bg-white rounded-2xl border border-slate-200">
-        <div className="px-4 sm:px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-          <h2 className="font-semibold text-slate-900">Recently Added Devices</h2>
-          <Link href="/devices" className="text-sm text-sky-600 hover:underline">View all</Link>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+        <div className="px-4 sm:px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Recently Added Devices</h2>
+          <Link href="/devices" className="text-sm text-sky-600 dark:text-sky-400 hover:underline">View all</Link>
         </div>
-        <div className="divide-y divide-slate-50">
+        <div className="divide-y divide-slate-50 dark:divide-slate-700">
           {stats?.recentDevices.map((device: any) => (
             <Link
               key={device.id}
               href={`/devices/${device.id}`}
-              className="flex items-start sm:items-center justify-between px-4 sm:px-6 py-3 hover:bg-slate-50 transition gap-3"
+              className="flex items-start sm:items-center justify-between px-4 sm:px-6 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition gap-3"
             >
               <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-900 truncate">{device.name}</p>
-                <p className="text-xs text-slate-500">{device.category?.name} · {device.serialNumber}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{device.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{device.category?.name} · {device.serialNumber}</p>
               </div>
               <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-3 shrink-0">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${STATUS_COLORS[device.status]}`}>
                   {STATUS_LABELS[device.status]}
                 </span>
-                <span className="text-xs text-slate-400 hidden sm:block">{formatDate(device.createdAt)}</span>
+                <span className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block">{formatDate(device.createdAt)}</span>
               </div>
             </Link>
           ))}

@@ -49,32 +49,32 @@ export default function NewDevicePage() {
     mutation.mutate(data)
   }
 
-  const inputCls = "w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+  const inputCls = "w-full border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
 
   return (
     <div className="p-4 sm:p-8 max-w-2xl">
-      <Link href="/devices" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-700 mb-6">
+      <Link href="/devices" className="inline-flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 mb-6">
         <ArrowLeft size={16} /> Back to Devices
       </Link>
 
-      <h1 className="text-2xl font-bold text-slate-900 mb-6">Add New Device</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-6">Add New Device</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-2xl px-4 py-3 text-sm">{error}</div>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{error}</div>
         )}
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-4">
-          <h2 className="font-semibold text-slate-900">Basic Info</h2>
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 sm:p-6 space-y-4">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Basic Info</h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Device Name *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Device Name *</label>
               <input required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
                 className={inputCls} placeholder="MacBook Pro 14" />
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Serial Number *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Serial Number *</label>
               <input required value={form.serialNumber} onChange={e => setForm({ ...form, serialNumber: e.target.value })}
                 className={inputCls} placeholder="SN-2024-001" />
             </div>
@@ -82,7 +82,7 @@ export default function NewDevicePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
               <select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })}
                 className={inputCls}>
                 <option value="">Select category</option>
@@ -90,7 +90,7 @@ export default function NewDevicePage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Initial Status</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Initial Status</label>
               <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
                 className={inputCls}>
                 <option value="IN_WAREHOUSE">In Warehouse</option>
@@ -100,31 +100,31 @@ export default function NewDevicePage() {
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 text-xs text-blue-700">
+          <div className="bg-blue-50 dark:bg-blue-900/30 border border-blue-100 dark:border-blue-800 rounded-xl px-3 py-2 text-xs text-blue-700 dark:text-blue-400">
             Cihazı birine atamak için önce kaydedin, ardından detay sayfasından atama yapın.
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Purchase Date</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Purchase Date</label>
             <input type="date" value={form.purchaseDate} onChange={e => setForm({ ...form, purchaseDate: e.target.value })}
               className={inputCls} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes</label>
             <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} rows={2}
               className={inputCls} />
           </div>
         </div>
 
         {fields.length > 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 space-y-4">
-            <h2 className="font-semibold text-slate-900">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 sm:p-6 space-y-4">
+            <h2 className="font-semibold text-slate-900 dark:text-slate-100">
               {selectedCategory?.name} Specifications
             </h2>
             {(fields as any[]).map((field: any) => (
               <div key={field.id}>
-                <label className="block text-sm font-medium text-slate-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   {field.label} {field.isRequired && <span className="text-red-500">*</span>}
                 </label>
                 <CustomFieldInput
@@ -138,7 +138,7 @@ export default function NewDevicePage() {
         )}
 
         <button type="submit" disabled={mutation.isPending}
-          className="w-full bg-slate-900 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-slate-800 transition disabled:opacity-50">
+          className="w-full bg-slate-900 dark:bg-sky-600 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition disabled:opacity-50">
           {mutation.isPending ? 'Creating...' : 'Create Device'}
         </button>
       </form>
