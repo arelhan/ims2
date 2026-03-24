@@ -248,7 +248,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
                       setShowPersonnelOptions(true)
                     }}
                     placeholder="Search person or department"
-                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
+                    className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
                   />
 
                   {showPersonnelOptions && (
@@ -281,7 +281,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
 
                 <input value={assignNotes} onChange={e => setAssignNotes(e.target.value)}
                   placeholder="Notes (optional)"
-                  className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400" />
+                  className="w-full border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400" />
                 <button
                   onClick={() => assignPersonnelId && assignMutation.mutate()}
                   disabled={!assignPersonnelId || assignMutation.isPending}
