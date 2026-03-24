@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"backend,frontend,public-app\" -c \"cyan,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:public\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:public": "cd public-app && npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
   }
 }

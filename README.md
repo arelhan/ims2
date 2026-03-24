@@ -39,41 +39,17 @@ ims2/
 - Node.js 18+
 - npm
 
----
-
-### Quick Start — Linux / macOS / WSL
+### Quick Start (all platforms)
 
 ```bash
 # 1. Install dependencies, set up env files, run migrations
-./setup.sh
+npm run setup
 
 # 2. Start all services (Ctrl+C to stop)
-./start.sh
+npm run dev
 ```
 
----
-
-### Quick Start — Windows
-
-> Requires [Node.js 18+](https://nodejs.org) installed and available in PATH.
-
-```bat
-:: 1. Install dependencies, set up env files, run migrations
-setup.bat
-
-:: 2. Start all services
-start.bat
-```
-
-`start.bat` asks how you want to run the services:
-
-| Mode | Description | How to stop |
-|------|-------------|-------------|
-| **[1] Terminal windows** | Each service opens in its own visible window | Close each window |
-| **[2] Background (hidden)** | Services run silently; logs saved to `.ims-run\` | Run `stop.bat` |
-| **[3] Background + auto-start** | Like [2], but also registers a Task Scheduler task so services start automatically on every login | Run `stop.bat`; to remove auto-start run `unregister-startup.bat` |
-
-> **Note:** Mode [3] requires running `start.bat` as Administrator (right-click → Run as administrator).
+Open the admin panel at http://localhost:3001 and complete the setup wizard to create your admin account.
 
 ---
 
@@ -82,14 +58,10 @@ start.bat
 #### 1. Install dependencies
 
 ```bash
-# Backend
-cd backend && npm install
-
-# Admin panel
-cd frontend && npm install
-
-# Public app
-cd public-app && npm install
+npm install                          # Root (concurrently)
+cd backend && npm install && cd ..
+cd frontend && npm install && cd ..
+cd public-app && npm install && cd ..
 ```
 
 #### 2. Configure environment variables
@@ -108,18 +80,14 @@ cp backend/.env.example backend/.env
 | `PUBLIC_APP_URL` | Full URL of the public app for QR codes. Leave empty to auto-detect the server IP | `""` |
 | `PUBLIC_APP_PORT`| Port of the public app (used when auto-detecting IP)    | `3002`                   |
 
-**Frontend** — copy and edit:
+**Frontend** — copy:
 ```bash
 cp frontend/.env.local.example frontend/.env.local
-# Windows:
-copy frontend\.env.local.example frontend\.env.local
 ```
 
-**Public app** — copy and edit:
+**Public app** — copy:
 ```bash
 cp public-app/.env.local.example public-app/.env.local
-# Windows:
-copy public-app\.env.local.example public-app\.env.local
 ```
 
 #### 3. Set up the database
@@ -133,17 +101,8 @@ No seed data is needed. On first launch, the app will redirect to `/setup` where
 
 #### 4. Run the apps
 
-Open three terminals:
-
 ```bash
-# Terminal 1 — Backend API
-cd backend && npm run dev
-
-# Terminal 2 — Admin panel
-cd frontend && npm run dev
-
-# Terminal 3 — Public app (for QR codes)
-cd public-app && npm run dev
+npm run dev
 ```
 
 | App          | URL                    |
@@ -151,6 +110,16 @@ cd public-app && npm run dev
 | Admin panel  | http://localhost:3001  |
 | Public app   | http://localhost:3002  |
 | API          | http://localhost:4000  |
+
+## Docker
+
+For production deployment, use Docker Compose:
+
+```bash
+cp .env.docker .env
+# Edit .env and set a strong JWT_SECRET
+docker compose up -d
+```
 
 ## QR Codes
 
