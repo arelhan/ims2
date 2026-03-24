@@ -42,6 +42,11 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
+// Health check
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok' })
+})
+
 // Public routes — no auth
 app.use('/api/public', publicRoutes)
 app.use('/api/setup', setupRoutes)

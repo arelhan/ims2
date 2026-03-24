@@ -29,4 +29,4 @@ COPY package*.json ./
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "mkdir -p /data/db && npx prisma migrate deploy && node dist/index.js"]

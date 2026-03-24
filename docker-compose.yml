@@ -13,6 +13,12 @@ services:
     volumes:
       - db_data:/data/db
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   frontend:
     build:
@@ -24,8 +30,15 @@ services:
     environment:
       - BACKEND_URL=http://backend:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   public-app:
     build:
@@ -37,8 +50,15 @@ services:
     environment:
       - BACKEND_URL=http://backend:4000
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3002"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
 volumes:
   db_data:
