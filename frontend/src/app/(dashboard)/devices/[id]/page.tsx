@@ -22,6 +22,11 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
     queryFn: async () => (await api.get(`/devices/${params.id}`)).data,
   })
 
+  const { data: config } = useQuery({
+    queryKey: ['config'],
+    queryFn: async () => (await api.get('/config')).data,
+  })
+
   const { data: personnel = [] } = useQuery({
     queryKey: ['personnel'],
     queryFn: async () => (await api.get('/personnel')).data,
@@ -141,6 +146,16 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
                 >
                   <Download size={15} /> Download QR
                 </button>
+                {config?.publicBaseUrl && (
+                  <a
+                    href={`${config.publicBaseUrl}/device/${params.id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-block text-xs text-sky-600 dark:text-sky-400 hover:underline break-all"
+                  >
+                    {config.publicBaseUrl}/device/{params.id}
+                  </a>
+                )}
               </div>
             </>
           ) : (

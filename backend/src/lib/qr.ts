@@ -1,7 +1,7 @@
 import QRCode from 'qrcode'
 import os from 'os'
 
-function getServerIP(): string {
+export function getServerIP(): string {
   // If explicitly configured, use that
   if (process.env.PUBLIC_APP_URL) return process.env.PUBLIC_APP_URL
 

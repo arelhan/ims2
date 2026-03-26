@@ -15,6 +15,7 @@ import userRoutes from './routes/user.routes'
 import backupRoutes from './routes/backup.routes'
 import publicRoutes from './routes/public.routes'
 import setupRoutes from './routes/setup.routes'
+import { getServerIP } from './lib/qr'
 import { errorMiddleware } from './middleware/error.middleware'
 import { verifyToken } from './middleware/auth.middleware'
 import { requireAdmin } from './middleware/admin.middleware'
@@ -45,6 +46,11 @@ app.use(cookieParser())
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+// Public config (no auth)
+app.get('/api/config', (_req, res) => {
+  res.json({ publicBaseUrl: getServerIP() })
 })
 
 // Public routes — no auth

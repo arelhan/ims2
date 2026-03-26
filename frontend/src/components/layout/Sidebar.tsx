@@ -1,6 +1,7 @@
 'use client'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
 import { useTheme } from '@/components/ThemeProvider'
@@ -21,6 +22,11 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
   const pathname = usePathname()
   const router = useRouter()
   const { theme, toggleTheme } = useTheme()
+  const [username, setUsername] = useState('')
+
+  useEffect(() => {
+    api.get('/auth/me').then(res => setUsername(res.data.username)).catch(() => {})
+  }, [])
 
   async function handleLogout() {
     await api.post('/auth/logout')
@@ -90,7 +96,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/30 hover:text-red-600 dark:hover:text-red-400 transition-colors w-full"
         >
           <LogOut size={17} strokeWidth={2} />
-          Sign out
+          Sign out{username ? ` (${username})` : ''}
         </button>
       </div>
     </aside>
