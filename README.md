@@ -34,45 +34,18 @@ Requires **Node.js 18+**.
 
 ```bash
 npm run setup   # Install deps, configure env, run migrations
-npm run dev     # Start all services (terminal stays open)
+npm run dev     # Start all services (backend, frontend, public-app)
 ```
 
 Open http://localhost:3001 and create your admin account.
 
-## Running on Windows
+## Commands
 
-### Terminal mode (geliştirme)
 ```bash
-npm run dev         # Tüm servisler bu terminalde çalışır, Ctrl+C ile durur
-```
-
-### Arka planda (terminal kapatılabilir)
-```bash
-npm run start:bg    # Servisleri arka planda başlat
-npm run stop        # Durdur
-```
-
-### Bilgisayar açılışında otomatik başlat
-Yönetici olarak bir terminal açın (cmd veya PowerShell → "Yönetici olarak çalıştır"):
-```bash
-npm run startup:register    # Windows Task Scheduler'a kaydet
-npm run startup:unregister  # Kaydı kaldır
-```
-
-Kayıt sonrasında bilgisayar yeniden başlatılsa bile IMS otomatik olarak arka planda başlar.
-
-### İnteraktif mod (menü)
-```bash
-npm start   # Terminal / Arka plan / Otomatik başlatma seçeneklerini gösterir
-```
-
-### Log dosyaları
-Arka planda çalışırken loglar `.ims-run/` klasöründe tutulur:
-```
-.ims-run/
-  backend.log
-  frontend.log
-  public-app.log
+npm run dev     # Start all 3 services in one terminal (Ctrl+C to stop)
+npm start       # Same as npm run dev
+npm run stop    # Kill any running services (ports 3001, 3002, 4000)
+npm run setup   # First-time setup (install deps, env files, migrations)
 ```
 
 ## License

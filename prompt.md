@@ -162,9 +162,11 @@ ims2/
 │   ├── package.json
 │   └── tsconfig.json
 │
-├── setup.sh                            ← full setup: checks Linux Node via nvm, creates .env files, parallel npm install, migration
-├── start.sh                            ← starts all 3 apps in one terminal with color-prefixed logs
-├── stop.sh                             ← stops all running apps via saved PIDs
+├── scripts/
+│   ├── setup.js                        ← full setup: installs deps, creates .env files, runs migrations
+│   ├── stop.js                         ← kills processes on ports 3001, 3002, 4000
+│   └── dev-with-ip.js                  ← wraps next dev to show real network IP instead of 0.0.0.0
+├── package.json                        ← root scripts: dev, start, stop, setup
 ├── .gitignore
 ├── .gitattributes                      ← forces LF line endings (important for WSL)
 └── README.md
@@ -423,45 +425,32 @@ GET    /api/dashboard/stats
 ## SETUP & DEPLOYMENT
 
 ### Prerequisites
-- Running on Linux / WSL2 (Debian recommended)
-- `curl` (installed automatically if missing)
-- Node.js 18+ — installed automatically via nvm if missing or if Windows npm is detected in PATH
+- Node.js 18+
 
 ### First-time setup
 ```bash
-chmod +x setup.sh start.sh stop.sh
-./setup.sh
+npm run setup
 ```
 
-`setup.sh` does:
-1. Detects Windows npm in WSL PATH and installs Linux Node.js 20 via nvm if needed
-2. Creates `.env` / `.env.local` files from examples (auto-generates `JWT_SECRET`)
-3. Runs `npm install` in all 3 packages **in parallel**
-4. Runs `npx prisma migrate deploy`
+`setup.js` does:
+1. Creates `.env` / `.env.local` files from examples (auto-generates `JWT_SECRET`)
+2. Runs `npm install` in all 3 packages
+3. Runs `npx prisma migrate deploy`
 
 ### Running
 ```bash
-./start.sh   # starts backend + frontend + public-app, color-coded logs in one terminal
-./stop.sh    # stops all services (from another terminal)
-# or Ctrl+C in start.sh terminal
+npm run dev     # starts all 3 services in one terminal (concurrently)
+npm start       # same as npm run dev
+npm run stop    # kills any running services on ports 3001, 3002, 4000
+# or Ctrl+C in the dev terminal
 ```
 
-### WSL2 — network access from other devices
-Add to `C:\Users\<you>\.wslconfig`:
-```ini
-[wsl2]
-networkingMode=mirrored
-```
-Then run `wsl --shutdown` and reopen WSL.
-Also allow ports in Windows Firewall (run as Admin):
+### Network access from other devices
+Allow ports in Windows Firewall (run as Admin):
 ```powershell
 New-NetFirewallRule -DisplayName "IMS App" -Direction Inbound -Protocol TCP -LocalPort 3001,3002,4000 -Action Allow
 ```
-After this, `start.sh` displays the LAN IP and all devices on the network can access the app.
-
-### Line endings (Windows/WSL)
-`.gitattributes` enforces LF for all text files, CRLF for `.bat`/`.cmd`.
-After cloning on Windows: `git add --renormalize .`
+The terminal shows the LAN IP on startup. All devices on the network can access the app via that IP.
 
 ---
 

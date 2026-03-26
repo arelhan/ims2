@@ -39,7 +39,7 @@ export default function BackupPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!confirm('Bu işlem mevcut veritabanının üzerine yazacak. Devam edilsin mi?')) {
+    if (!confirm('This will overwrite the current database. Continue?')) {
       if (fileRef.current) fileRef.current.value = ''
       return
     }
@@ -55,10 +55,10 @@ export default function BackupPage() {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       setRestoreStatus('success')
-      setMessage('Veritabanı başarıyla geri yüklendi.')
+      setMessage('Database restored successfully.')
     } catch (err: any) {
       setRestoreStatus('error')
-      setMessage(err.response?.data?.error || 'Geri yükleme başarısız.')
+      setMessage(err.response?.data?.error || 'Restore failed.')
     } finally {
       if (fileRef.current) fileRef.current.value = ''
     }
@@ -72,7 +72,7 @@ export default function BackupPage() {
 
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Backup & Restore</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Veritabanını indir veya geri yükle</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Download or restore the database</p>
       </div>
 
       {restoreStatus === 'success' && (
@@ -88,8 +88,8 @@ export default function BackupPage() {
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Backup İndir</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Mevcut SQLite veritabanını .db dosyası olarak indir.</p>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Download Backup</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Download the current SQLite database as a .db file.</p>
         </div>
         <button
           onClick={handleDownload}
@@ -97,20 +97,20 @@ export default function BackupPage() {
           className="flex items-center gap-2 bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition disabled:opacity-50"
         >
           {downloadLoading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-          {downloadLoading ? 'İndiriliyor...' : 'Backup İndir'}
+          {downloadLoading ? 'Downloading...' : 'Download Backup'}
         </button>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 space-y-4">
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Veritabanı Geri Yükle</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Restore Database</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Daha önce indirilen .db dosyasını yükle. Mevcut veritabanı otomatik olarak yedeklenir.
+            Upload a previously downloaded .db file. The current database will be backed up automatically.
           </p>
         </div>
         <div className="border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-6 text-center">
           <Upload size={24} className="mx-auto text-slate-300 dark:text-slate-500 mb-2" />
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Bir .db dosyası seç</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-3">Select a .db file</p>
           <input
             ref={fileRef}
             type="file"
@@ -127,8 +127,8 @@ export default function BackupPage() {
             }`}
           >
             {restoreStatus === 'loading' ? (
-              <><Loader2 size={15} className="animate-spin" /> Yükleniyor...</>
-            ) : 'Dosya Seç'}
+              <><Loader2 size={15} className="animate-spin" /> Uploading...</>
+            ) : 'Choose File'}
           </label>
         </div>
       </div>

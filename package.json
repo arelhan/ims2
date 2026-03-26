@@ -4,15 +4,12 @@
   "private": true,
   "scripts": {
     "setup": "node scripts/setup.js",
+    "start": "npm run dev",
     "dev": "concurrently -k -p \"[{name}]\" -n \"backend,frontend,public-app\" -c \"cyan,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:public\"",
     "dev:backend": "cd backend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:public": "cd public-app && npm run dev",
-    "start": "node scripts/start.js",
-    "start:bg": "node scripts/start.js --background",
-    "stop": "node scripts/stop.js",
-    "startup:register": "node scripts/start.js --background --register-startup",
-    "startup:unregister": "node scripts/unregister-startup.js"
+    "stop": "node scripts/stop.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
