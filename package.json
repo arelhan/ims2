@@ -5,13 +5,16 @@
   "scripts": {
     "setup": "node scripts/setup.js",
     "start": "npm run dev",
-    "dev": "concurrently -k -p \"[{name}]\" -n \"backend,frontend,public-app\" -c \"cyan,green,magenta\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:public\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"backend,public-app,frontend\" -c \"cyan,magenta,green\" \"npm run dev:backend\" \"npm run dev:public:wait\" \"npm run dev:frontend:wait\"",
     "dev:backend": "cd backend && npm run dev",
+    "dev:public:wait": "wait-on tcp:4000 && cd public-app && npm run dev",
+    "dev:frontend:wait": "wait-on tcp:3002 && cd frontend && npm run dev",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:public": "cd public-app && npm run dev",
     "stop": "node scripts/stop.js"
   },
   "devDependencies": {
-    "concurrently": "^9.1.0"
+    "concurrently": "^9.1.0",
+    "wait-on": "^7.2.0"
   }
 }
