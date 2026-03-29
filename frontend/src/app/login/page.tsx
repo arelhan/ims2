@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
 import LoginForm from './LoginForm'
 
@@ -17,5 +18,5 @@ async function checkSetupStatus(): Promise<boolean> {
 export default async function LoginPage() {
   const needsSetup = await checkSetupStatus()
   if (needsSetup) redirect('/setup')
-  return <LoginForm />
+  return <Suspense><LoginForm /></Suspense>
 }
