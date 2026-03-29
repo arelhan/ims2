@@ -5,9 +5,8 @@ function getBaseURL(): string {
     // Server-side: use env or localhost
     return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
   }
-  // Client-side: always use the same hostname the user is browsing from
-  // This works for both localhost and internal IP access
-  return `${window.location.protocol}//${window.location.hostname}:4000/api`
+  // Client-side: use relative /api path — Next.js rewrites proxy it to the backend
+  return '/api'
 }
 
 const api = axios.create({
@@ -27,10 +26,7 @@ api.interceptors.response.use(
       // Call logout so the backend clears it, then redirect to login.
       // Without this, the middleware sees the cookie and sends us back to dashboard → loop.
       try {
-        await fetch(
-          `${window.location.protocol}//${window.location.hostname}:4000/api/auth/logout`,
-          { method: 'POST', credentials: 'include' }
-        )
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
       } catch { /* backend unreachable — cookie stays but redirect still needed */ }
       const next = `${window.location.pathname}${window.location.search}`
       window.location.href = `/login?next=${encodeURIComponent(next)}`
