@@ -5,7 +5,9 @@ services:
       - "4000:4000"
     environment:
       - DATABASE_URL=file:/data/db/prod.db
-      - JWT_SECRET=${JWT_SECRET:-degistir-bunu-guclu-bir-secret-yap}
+      # JWT_SECRET is required. The backend refuses to start in production with an
+      # unset or default/weak secret. Set it in a .env file next to this compose file.
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET is required — set a strong random value in .env (see .env.docker)}
       - PORT=4000
       - NODE_ENV=production
       - ADMIN_PANEL_URL=${ADMIN_PANEL_URL:-http://localhost:3001}

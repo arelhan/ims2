@@ -4,19 +4,35 @@ import api from '@/lib/api'
 import { useState } from 'react'
 import { formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import { Search } from 'lucide-react'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 export default function AssignmentsPage() {
   const queryClient = useQueryClient()
   const [filter, setFilter] = useState('true')
+  const [search, setSearch] = useState('')
+  const [actionError, setActionError] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
 
-  const { data: assignments = [], isLoading } = useQuery({
-    queryKey: ['assignments', filter],
-    queryFn: async () => (await api.get(`/assignments?isActive=${filter}`)).data,
+  const { data: assignments = [], isLoading, isError } = useQuery({
+    queryKey: ['assignments', filter, debouncedSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (filter) params.set('isActive', filter)
+      if (debouncedSearch) params.set('search', debouncedSearch)
+      return (await api.get(`/assignments?${params}`)).data
+    },
   })
 
   const returnMutation = useMutation({
     mutationFn: async (id: string) => api.patch(`/assignments/${id}/return`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['assignments'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['devices'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      setActionError('')
+    },
+    onError: (err: any) => setActionError(err.response?.data?.error || 'Return failed'),
   })
 
   const rows = assignments as any[]
@@ -28,28 +44,44 @@ export default function AssignmentsPage() {
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">Device assignment audit log</p>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {[
-          { value: 'true', label: 'Active' },
-          { value: 'false', label: 'Returned' },
-          { value: '', label: 'All' },
-        ].map(opt => (
-          <button
-            key={opt.value}
-            onClick={() => setFilter(opt.value)}
-            className={`px-4 py-1.5 rounded-xl text-sm font-medium transition ${
-              filter === opt.value
-                ? 'bg-slate-900 dark:bg-sky-600 text-white'
-                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      {actionError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{actionError}</div>
+      )}
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: 'true', label: 'Active' },
+            { value: 'false', label: 'Returned' },
+            { value: '', label: 'All' },
+          ].map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setFilter(opt.value)}
+              className={`px-4 py-1.5 rounded-xl text-sm font-medium transition ${
+                filter === opt.value
+                  ? 'bg-slate-900 dark:bg-sky-600 text-white'
+                  : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative sm:ml-auto w-full sm:w-72">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={search}
+            onChange={event => setSearch(event.target.value)}
+            placeholder="Search device, person or department..."
+            className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 rounded-xl text-sm bg-white dark:bg-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400"
+          />
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {isLoading ? <div className="p-8 text-center text-slate-400 dark:text-slate-500">Loading...</div> :
+          isError ? <div className="p-8 text-center text-red-600 dark:text-red-400">Assignments could not be loaded. Please try again.</div> :
           rows.length === 0 ? <div className="p-12 text-center text-slate-400 dark:text-slate-500">No assignments found</div> : (
             <>
               {/* Desktop table */}
@@ -90,7 +122,7 @@ export default function AssignmentsPage() {
                         </td>
                         <td className="px-6 py-3 text-right">
                           {a.isActive && (
-                            <button onClick={() => returnMutation.mutate(a.id)} className="text-xs text-red-600 dark:text-red-400 hover:underline">
+                            <button disabled={returnMutation.isPending} onClick={() => { if (confirm('Return this device to the warehouse?')) returnMutation.mutate(a.id) }} className="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50">
                               Return
                             </button>
                           )}
@@ -123,7 +155,7 @@ export default function AssignmentsPage() {
                         <span className="text-slate-400 dark:text-slate-500 ml-1">({a.personnel?.department?.name || '—'})</span>
                       </Link>
                       {a.isActive && (
-                        <button onClick={() => returnMutation.mutate(a.id)} className="text-xs text-red-600 dark:text-red-400 hover:underline shrink-0">
+                        <button disabled={returnMutation.isPending} onClick={() => { if (confirm('Return this device to the warehouse?')) returnMutation.mutate(a.id) }} className="text-xs text-red-600 dark:text-red-400 hover:underline shrink-0 disabled:opacity-50">
                           Return
                         </button>
                       )}

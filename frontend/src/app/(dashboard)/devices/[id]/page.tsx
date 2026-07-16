@@ -16,6 +16,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
   const [showPersonnelOptions, setShowPersonnelOptions] = useState(false)
   const [assignNotes, setAssignNotes] = useState('')
   const [deleteError, setDeleteError] = useState('')
+  const [actionError, setActionError] = useState('')
 
   const { data: device, isLoading } = useQuery({
     queryKey: ['device', params.id],
@@ -50,10 +51,14 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['device', params.id] })
       queryClient.invalidateQueries({ queryKey: ['devices'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      setActionError('')
       setAssignPersonnelId('')
       setPersonnelSearch('')
       setAssignNotes('')
     },
+    onError: (err: any) => setActionError(err.response?.data?.error || 'Assignment failed'),
   })
 
   const returnMutation = useMutation({
@@ -61,7 +66,11 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['device', params.id] })
       queryClient.invalidateQueries({ queryKey: ['devices'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+      setActionError('')
     },
+    onError: (err: any) => setActionError(err.response?.data?.error || 'Return failed'),
   })
 
   const filteredPersonnel = useMemo(() => {
@@ -103,6 +112,9 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
     <div className="p-4 sm:p-6 lg:p-8 space-y-5 max-w-4xl">
       {deleteError && (
         <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{deleteError}</div>
+      )}
+      {actionError && (
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-2xl px-4 py-3 text-sm">{actionError}</div>
       )}
 
       <div className="flex items-center justify-between gap-3">
@@ -232,7 +244,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
                     {a.isActive ? (
                       <div className="flex items-center gap-2">
                         <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
-                        <button onClick={() => returnMutation.mutate(a.id)} className="text-xs text-red-600 hover:underline">
+                        <button disabled={returnMutation.isPending} onClick={() => { if (confirm('Return this device to the warehouse?')) returnMutation.mutate(a.id) }} className="text-xs text-red-600 hover:underline disabled:opacity-50">
                           Return
                         </button>
                       </div>
@@ -248,7 +260,7 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
 
         {/* Sidebar */}
         <div className="space-y-4">
-          {!activeAssignment && device.status !== 'RETIRED' && (
+          {!activeAssignment && device.status === 'IN_WAREHOUSE' && (
             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4">
               <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3 text-sm">Assign Device</h3>
               <div className="space-y-2">
@@ -314,8 +326,9 @@ export default function DeviceDetailPage({ params }: { params: { id: string } })
               <p className="text-sm text-slate-500 dark:text-slate-400">{activeAssignment.personnel?.department?.name || '—'}</p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Since {formatDate(activeAssignment.assignedAt)}</p>
               <button
-                onClick={() => returnMutation.mutate(activeAssignment.id)}
-                className="mt-3 w-full text-xs text-red-600 border border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 rounded-xl py-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 transition"
+                disabled={returnMutation.isPending}
+                onClick={() => { if (confirm('Return this device to the warehouse?')) returnMutation.mutate(activeAssignment.id) }}
+                className="mt-3 w-full text-xs text-red-600 border border-red-200 dark:border-red-800 bg-white dark:bg-slate-800 rounded-xl py-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 transition disabled:opacity-50"
               >
                 Return Device
               </button>

@@ -35,42 +35,57 @@ export async function createAssignment(data: {
   personnelId: string
   notes?: string
 }) {
-  const device = await prisma.device.findUnique({ where: { id: data.deviceId } })
-  if (!device) throw { status: 404, message: 'Device not found' }
-  if (device.status === 'ASSIGNED') throw { status: 400, message: 'Device is already assigned' }
-  if (device.status === 'RETIRED') throw { status: 400, message: 'Cannot assign a retired device' }
-
   const personnel = await prisma.personnel.findUnique({ where: { id: data.personnelId } })
   if (!personnel) throw { status: 404, message: 'Personnel not found' }
 
-  const assignment = await prisma.assignment.create({
-    data: { ...data, isActive: true },
-    include: { device: true, personnel: true },
-  })
+  // Re-check device status and flip it inside one transaction so two
+  // concurrent requests can't both assign the same device.
+  return prisma.$transaction(async tx => {
+    const device = await tx.device.findUnique({ where: { id: data.deviceId } })
+    if (!device) throw { status: 404, message: 'Device not found' }
+    if (device.status === 'ASSIGNED') throw { status: 400, message: 'Device is already assigned' }
+    if (device.status !== 'IN_WAREHOUSE') {
+      throw { status: 400, message: 'Only devices in the warehouse can be assigned' }
+    }
 
-  await prisma.device.update({
-    where: { id: data.deviceId },
-    data: { status: 'ASSIGNED' },
-  })
+    const assignment = await tx.assignment.create({
+      data: {
+        deviceId: data.deviceId,
+        personnelId: data.personnelId,
+        notes: data.notes,
+        isActive: true,
+      },
+      include: { device: true, personnel: true },
+    })
 
-  return assignment
+    await tx.device.update({
+      where: { id: data.deviceId },
+      data: { status: 'ASSIGNED' },
+    })
+
+    return assignment
+  })
 }
 
 export async function returnAssignment(id: string, notes?: string) {
-  const assignment = await prisma.assignment.findUnique({ where: { id } })
-  if (!assignment) throw { status: 404, message: 'Assignment not found' }
-  if (!assignment.isActive) throw { status: 400, message: 'Assignment already returned' }
+  return prisma.$transaction(async tx => {
+    const assignment = await tx.assignment.findUnique({ where: { id } })
+    if (!assignment) throw { status: 404, message: 'Assignment not found' }
+    if (!assignment.isActive) throw { status: 400, message: 'Assignment already returned' }
 
-  const updated = await prisma.assignment.update({
-    where: { id },
-    data: { isActive: false, returnedAt: new Date(), notes: notes || assignment.notes },
-    include: { device: true, personnel: true },
+    const updated = await tx.assignment.update({
+      where: { id },
+      data: { isActive: false, returnedAt: new Date(), notes: notes || assignment.notes },
+      include: { device: true, personnel: true },
+    })
+
+    // Only move the device back to warehouse if it is still marked ASSIGNED
+    // (it may have been changed to MAINTENANCE/RETIRED in the meantime).
+    await tx.device.updateMany({
+      where: { id: assignment.deviceId, status: 'ASSIGNED' },
+      data: { status: 'IN_WAREHOUSE' },
+    })
+
+    return updated
   })
-
-  await prisma.device.update({
-    where: { id: assignment.deviceId },
-    data: { status: 'IN_WAREHOUSE' },
-  })
-
-  return updated
 }

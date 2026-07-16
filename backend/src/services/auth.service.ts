@@ -1,6 +1,15 @@
+import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../lib/prisma'
 import { signToken } from '../lib/jwt'
+
+// Constant-time string comparison to avoid leaking the reset code via timing.
+function safeEqual(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return crypto.timingSafeEqual(bufA, bufB)
+}
 
 export async function login(username: string, password: string) {
   const user = await prisma.user.findUnique({ where: { username } })
@@ -41,7 +50,7 @@ export async function forgotPassword(username: string) {
 
   // Generate a guaranteed 6-char alphanumeric code
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  const resetCode = Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  const resetCode = Array.from({ length: 6 }, () => chars[crypto.randomInt(chars.length)]).join('')
   const resetCodeExpiry = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
 
   await prisma.user.update({
@@ -55,7 +64,7 @@ export async function forgotPassword(username: string) {
 export async function resetPassword(username: string, code: string, newPassword: string) {
   const user = await prisma.user.findUnique({ where: { username } })
   // Same error for missing code and wrong code — avoids leaking whether a reset was requested
-  if (!user || !user.resetCode || !user.resetCodeExpiry || user.resetCode !== code.toUpperCase()) {
+  if (!user || !user.resetCode || !user.resetCodeExpiry || !safeEqual(user.resetCode, code.toUpperCase())) {
     throw { status: 400, message: 'Invalid or expired reset code' }
   }
 

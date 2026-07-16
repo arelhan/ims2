@@ -1,76 +1,14 @@
 'use client'
 import { useRef, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { Download, Upload } from 'lucide-react'
 
-type Department = {
-  id: string
-  name: string
-}
-
-type ImportRow = {
-  name: string
-  email: string
-  department: string
-  phone?: string
-}
-
-function parseCsvLine(line: string): string[] {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i]
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"'
-        i += 1
-      } else {
-        inQuotes = !inQuotes
-      }
-      continue
-    }
-
-    if (char === ',' && !inQuotes) {
-      result.push(current.trim())
-      current = ''
-      continue
-    }
-
-    current += char
-  }
-
-  result.push(current.trim())
-  return result
-}
-
-function parsePersonnelCsv(content: string): ImportRow[] {
-  const lines = content
-    .replace(/^\uFEFF/, '')
-    .split(/\r?\n/)
-    .map(line => line.trim())
-    .filter(Boolean)
-
-  if (lines.length < 2) {
-    throw new Error('CSV must include a header and at least one row.')
-  }
-
-  const header = parseCsvLine(lines[0]).map(item => item.toLowerCase())
-  const expected = ['name', 'email', 'department', 'phone']
-  const valid = expected.every((key, index) => header[index] === key)
-  if (!valid) {
-    throw new Error('Template header must be: name,email,department,phone')
-  }
-
-  return lines.slice(1).map((line, index) => {
-    const [name, email, department, phone] = parseCsvLine(line)
-    if (!name || !email || !department) {
-      throw new Error(`Row ${index + 2}: name, email and department are required.`)
-    }
-    return { name, email, department, phone: phone || undefined }
-  })
+type ImportResult = {
+  totalRows: number
+  createdCount: number
+  skippedCount: number
+  errors: string[]
 }
 
 export default function BulkImportTab() {
@@ -80,51 +18,15 @@ export default function BulkImportTab() {
   const [actionMessage, setActionMessage] = useState('')
   const [actionError, setActionError] = useState('')
 
-  const { data: departments = [] } = useQuery({
-    queryKey: ['departments'],
-    queryFn: async () => (await api.get('/departments')).data,
-    retry: 1,
-  })
-
   const importMutation = useMutation({
-    mutationFn: async (file: File) => {
-      const content = await file.text()
-      const rows = parsePersonnelCsv(content)
-      const errors: string[] = []
-      let createdCount = 0
-
-      for (const row of rows) {
-        const matchingDepartment = (departments as Department[]).find(
-          dep => dep.name.toLowerCase() === row.department.toLowerCase()
-        )
-
-        const payload: Record<string, string> = {
-          name: row.name,
-          email: row.email,
-        }
-
-        if (row.phone) payload.phone = row.phone
-        if (matchingDepartment) {
-          payload.departmentId = matchingDepartment.id
-        } else {
-          payload.department = row.department
-        }
-
-        try {
-          await api.post('/personnel', payload)
-          createdCount += 1
-        } catch (err: any) {
-          const reason = err.response?.data?.error || err.message || 'Unknown error'
-          errors.push(`${row.email}: ${reason}`)
-        }
-      }
-
-      return {
-        totalRows: rows.length,
-        createdCount,
-        skippedCount: errors.length,
-        errors,
-      }
+    mutationFn: async (file: File): Promise<ImportResult> => {
+      const formData = new FormData()
+      formData.append('file', file)
+      // The backend parses/validates the CSV and inserts atomically per row.
+      const res = await api.post('/personnel/bulk-import', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      return res.data
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['personnel'] })
@@ -139,18 +41,18 @@ export default function BulkImportTab() {
   })
 
   function downloadTemplate() {
-    const template = [
-      'name,email,department,phone',
-      'Ayse Yilmaz,ayse.yilmaz@firma.com,IT,05551234567',
-      'Mehmet Demir,mehmet.demir@firma.com,Finance,',
-    ].join('\n')
-
-    const blobUrl = window.URL.createObjectURL(new Blob([template], { type: 'text/csv;charset=utf-8' }))
-    const a = document.createElement('a')
-    a.href = blobUrl
-    a.download = 'personnel-template.csv'
-    a.click()
-    window.URL.revokeObjectURL(blobUrl)
+    // Fetch the canonical template from the backend so it always matches
+    // the parser's expected header.
+    api.get('/personnel/template', { responseType: 'blob' })
+      .then(res => {
+        const blobUrl = window.URL.createObjectURL(res.data)
+        const a = document.createElement('a')
+        a.href = blobUrl
+        a.download = 'personnel-template.csv'
+        a.click()
+        window.URL.revokeObjectURL(blobUrl)
+      })
+      .catch(() => setActionError('Could not download template'))
   }
 
   const browseLabel = importFile ? importFile.name : 'No file selected'
@@ -200,6 +102,9 @@ export default function BulkImportTab() {
             <Upload size={15} /> {importMutation.isPending ? 'Uploading...' : 'Import'}
           </button>
         </div>
+        <p className="text-xs text-slate-400 dark:text-slate-500">
+          CSV format: <code className="bg-slate-100 dark:bg-slate-700 px-1 rounded">name,email,department,phone</code>. Missing departments are created automatically.
+        </p>
       </div>
     </div>
   )

@@ -33,7 +33,7 @@ function StatCard({ title, value, icon: Icon, color }: {
 }
 
 export default function DashboardPage() {
-  const { data: stats, isLoading } = useQuery<Stats>({
+  const { data: stats, isLoading, isError } = useQuery<Stats>({
     queryKey: ['dashboard'],
     queryFn: async () => (await api.get('/dashboard/stats')).data,
     staleTime: 0,
@@ -52,6 +52,10 @@ export default function DashboardPage() {
         </div>
       </div>
     )
+  }
+
+  if (isError) {
+    return <div className="p-8 text-center text-red-600 dark:text-red-400">Dashboard data could not be loaded. Please try again.</div>
   }
 
   return (
@@ -83,6 +87,31 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Status distribution */}
+      {(stats?.totalDevices ?? 0) > 0 && (
+        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 sm:p-6">
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100 mb-4">Status Distribution</h2>
+          <div className="flex h-4 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+            {([
+              ['assigned', stats?.assigned ?? 0, 'bg-green-500'],
+              ['inWarehouse', stats?.inWarehouse ?? 0, 'bg-blue-500'],
+              ['maintenance', stats?.maintenance ?? 0, 'bg-amber-500'],
+              ['retired', stats?.retired ?? 0, 'bg-slate-400'],
+            ] as [string, number, string][]).map(([key, value, color]) => {
+              const total = stats?.totalDevices || 1
+              const pct = (value / total) * 100
+              return pct > 0 ? <div key={key} className={color} style={{ width: `${pct}%` }} title={`${key}: ${value}`} /> : null
+            })}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-xs text-slate-500 dark:text-slate-400">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500" /> Assigned {stats?.assigned ?? 0}</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> In Warehouse {stats?.inWarehouse ?? 0}</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Maintenance {stats?.maintenance ?? 0}</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-slate-400" /> Retired {stats?.retired ?? 0}</span>
+          </div>
+        </div>
+      )}
 
       {/* Recent Devices */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">

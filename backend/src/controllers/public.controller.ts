@@ -3,6 +3,9 @@ import { prisma } from '../lib/prisma'
 
 export async function getDeviceById(req: Request, res: Response, next: NextFunction) {
   try {
+    // Public endpoint (reachable by anyone who scans the QR): expose only
+    // non-sensitive device facts. Personnel names/departments are PII and
+    // are intentionally NOT included here.
     const device = await prisma.device.findUnique({
       where: { id: req.params.id },
       select: {
@@ -19,19 +22,6 @@ export async function getDeviceById(req: Request, res: Response, next: NextFunct
             customField: { select: { label: true, order: true, fieldType: true } },
           },
           orderBy: { customField: { order: 'asc' } },
-        },
-        assignments: {
-          where: { isActive: true },
-          select: {
-            assignedAt: true,
-            personnel: {
-              select: {
-                name: true,
-                department: { select: { name: true } },
-              },
-            },
-          },
-          take: 1,
         },
       },
     })

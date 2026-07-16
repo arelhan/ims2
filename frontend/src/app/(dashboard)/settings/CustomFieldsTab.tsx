@@ -2,7 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import { useState } from 'react'
-import { Plus, Trash2, Type, AlignLeft, Hash, Calendar, ToggleLeft, Mail, Phone, ChevronDown } from 'lucide-react'
+import { Plus, Trash2, Type, AlignLeft, Hash, Calendar, ToggleLeft, Mail, Phone, ChevronDown, ChevronUp, Pencil, Check, X } from 'lucide-react'
 
 const FIELD_TYPES = [
   { value: 'TEXT',     label: 'Text',      icon: Type,        desc: 'Single line text' },
@@ -26,6 +26,8 @@ export default function CustomFieldsTab() {
   const [selectedCategory, setSelectedCategory] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState({ label: '', fieldType: 'TEXT', isRequired: false, placeholder: '', selectOptions: '' })
+  const [editId, setEditId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ label: '', isRequired: false, placeholder: '' })
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
@@ -57,6 +59,50 @@ export default function CustomFieldsTab() {
     mutationFn: async (fid: string) => api.delete(`/categories/${selectedCategory}/fields/${fid}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fields', selectedCategory] }),
   })
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ fid, data }: { fid: string; data: any }) =>
+      (await api.put(`/categories/${selectedCategory}/fields/${fid}`, data)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['fields', selectedCategory] })
+      setEditId(null)
+    },
+  })
+
+  const reorderMutation = useMutation({
+    mutationFn: async (orderedIds: string[]) =>
+      (await api.patch(`/categories/${selectedCategory}/fields/reorder`, { orderedIds })).data,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['fields', selectedCategory] }),
+  })
+
+  function startEdit(field: any) {
+    setEditId(field.id)
+    setEditForm({
+      label: field.label,
+      isRequired: field.isRequired,
+      placeholder: field.placeholder || '',
+    })
+  }
+
+  function saveEdit(field: any) {
+    updateMutation.mutate({
+      fid: field.id,
+      data: {
+        label: editForm.label,
+        isRequired: editForm.isRequired,
+        placeholder: editForm.placeholder,
+      },
+    })
+  }
+
+  function moveField(index: number, direction: -1 | 1) {
+    const list = fields as any[]
+    const target = index + direction
+    if (target < 0 || target >= list.length) return
+    const ids = list.map((f: any) => f.id)
+    ;[ids[index], ids[target]] = [ids[target], ids[index]]
+    reorderMutation.mutate(ids)
+  }
 
   const selectedFieldType = FIELD_TYPES_MAP[form.fieldType]
 
@@ -202,14 +248,66 @@ export default function CustomFieldsTab() {
               <div className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm">No fields yet for this category</div>
             ) : (
               <div className="divide-y divide-slate-50 dark:divide-slate-700">
-                {(fields as any[]).map((field: any) => {
+                {(fields as any[]).map((field: any, index: number) => {
                   const typeInfo = FIELD_TYPES_MAP[field.fieldType]
                   const Icon = typeInfo?.icon ?? Type
-                  const optionCount = field.fieldType === 'SELECT'
+                  const isSelect = field.fieldType === 'SELECT'
+                  const optionCount = isSelect
                     ? (field.placeholder || '').split(',').filter(Boolean).length
                     : 0
+                  const list = fields as any[]
+
+                  if (editId === field.id) {
+                    return (
+                      <div key={field.id} className="px-4 py-3.5 space-y-3 bg-slate-50 dark:bg-slate-900/40">
+                        <input
+                          value={editForm.label}
+                          onChange={e => setEditForm({ ...editForm, label: e.target.value })}
+                          placeholder="Field label"
+                          className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 dark:bg-slate-700 dark:text-slate-100"
+                        />
+                        {field.fieldType !== 'BOOLEAN' && (
+                          <input
+                            value={editForm.placeholder}
+                            onChange={e => setEditForm({ ...editForm, placeholder: e.target.value })}
+                            placeholder={isSelect ? 'Options, comma-separated' : 'Placeholder'}
+                            className="w-full border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 dark:focus:ring-slate-400 dark:bg-slate-700 dark:text-slate-100"
+                          />
+                        )}
+                        <div className="flex items-center justify-between">
+                          <label className="flex items-center gap-2 cursor-pointer select-none" onClick={() => setEditForm({ ...editForm, isRequired: !editForm.isRequired })}>
+                            <div className={`w-9 h-5 rounded-full transition-colors relative ${editForm.isRequired ? 'bg-slate-900 dark:bg-sky-600' : 'bg-slate-200 dark:bg-slate-600'}`}>
+                              <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${editForm.isRequired ? 'translate-x-4' : ''}`} />
+                            </div>
+                            <span className="text-sm text-slate-700 dark:text-slate-300">Required</span>
+                          </label>
+                          <div className="flex gap-2">
+                            <button onClick={() => saveEdit(field)} disabled={!editForm.label || updateMutation.isPending}
+                              className="px-3 py-1.5 bg-slate-900 dark:bg-sky-600 text-white rounded-lg text-sm disabled:opacity-50 hover:bg-slate-800 dark:hover:bg-sky-500 transition">
+                              <Check size={14} />
+                            </button>
+                            <button onClick={() => setEditId(null)}
+                              className="px-3 py-1.5 border border-slate-200 dark:border-slate-700 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-slate-700/50 transition">
+                              <X size={14} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+
                   return (
                     <div key={field.id} className="flex items-center gap-3 px-4 py-3.5">
+                      <div className="flex flex-col shrink-0">
+                        <button onClick={() => moveField(index, -1)} disabled={index === 0 || reorderMutation.isPending}
+                          className="p-0.5 text-slate-300 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                          <ChevronUp size={14} />
+                        </button>
+                        <button onClick={() => moveField(index, 1)} disabled={index === list.length - 1 || reorderMutation.isPending}
+                          className="p-0.5 text-slate-300 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed">
+                          <ChevronDown size={14} />
+                        </button>
+                      </div>
                       <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
                         <Icon size={13} className="text-slate-500 dark:text-slate-400" />
                       </div>
@@ -217,10 +315,16 @@ export default function CustomFieldsTab() {
                         <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{field.label}</p>
                         <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
                           {typeInfo?.label ?? field.fieldType}
-                          {field.fieldType === 'SELECT' && ` · ${optionCount} options`}
+                          {isSelect && ` · ${optionCount} options`}
                           {field.isRequired && <span className="text-red-400 ml-1">· Required</span>}
                         </p>
                       </div>
+                      <button
+                        onClick={() => startEdit(field)}
+                        className="p-1.5 text-slate-300 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition"
+                      >
+                        <Pencil size={14} />
+                      </button>
                       <button
                         onClick={() => { if (confirm('Delete this field? Existing values will be removed.')) deleteMutation.mutate(field.id) }}
                         className="p-1.5 text-slate-300 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition"

@@ -160,9 +160,11 @@ export async function createPersonnel(data: PersonnelPayload) {
   const departmentId = await resolveDepartmentId(data)
   return prisma.personnel.create({
     data: {
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
+      name: data.name.trim(),
+      // Normalize email so uniqueness is case-insensitive and consistent
+      // with the bulk-import path.
+      email: data.email.trim().toLowerCase(),
+      phone: data.phone?.trim() || undefined,
       departmentId,
     },
     include: {
@@ -177,11 +179,11 @@ export async function updatePersonnel(id: string, data: PersonnelUpdatePayload) 
     email?: string
     phone?: string
     departmentId?: string
-  } = {
-    name: data.name,
-    email: data.email,
-    phone: data.phone,
-  }
+  } = {}
+
+  if (data.name !== undefined) updateData.name = data.name.trim()
+  if (data.email !== undefined) updateData.email = data.email.trim().toLowerCase()
+  if (data.phone !== undefined) updateData.phone = data.phone?.trim() || undefined
 
   if (data.departmentId || data.department) {
     updateData.departmentId = await resolveDepartmentId(data)

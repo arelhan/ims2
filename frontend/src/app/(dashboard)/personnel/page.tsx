@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '@/lib/api'
 import Link from 'next/link'
 import { useState } from 'react'
-import { Search, Trash2, Users, Upload, Building2 } from 'lucide-react'
+import { Search, Trash2, Users, Upload, Building2, Download } from 'lucide-react'
 import BulkImportTab from './BulkImportTab'
 import DepartmentsTab from './DepartmentsTab'
+import { exportToCsv } from '@/lib/utils'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 type Department = {
   id: string
@@ -32,6 +34,7 @@ export default function PersonnelPage() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('personnel')
   const [search, setSearch] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
   const [form, setForm] = useState({ name: '', email: '', departmentId: '', departmentName: '', phone: '' })
   const [deleteError, setDeleteError] = useState('')
   const [actionMessage, setActionMessage] = useState('')
@@ -43,9 +46,11 @@ export default function PersonnelPage() {
     retry: 1,
   })
 
-  const { data: personnel = [], isLoading } = useQuery({
-    queryKey: ['personnel', search],
-    queryFn: async () => (await api.get(`/personnel?search=${search}`)).data,
+  const { data: personnel = [], isLoading, isError: isPersonnelError } = useQuery({
+    queryKey: ['personnel', debouncedSearch],
+    queryFn: async () => (await api.get('/personnel', {
+      params: debouncedSearch ? { search: debouncedSearch } : undefined,
+    })).data,
   })
 
   const createMutation = useMutation({
@@ -97,9 +102,28 @@ export default function PersonnelPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Personnel</h1>
-        <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{rows.length} people</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Personnel</h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{rows.length} people</p>
+        </div>
+        <button
+          onClick={() => exportToCsv(
+            `personnel-${new Date().toISOString().slice(0, 10)}.csv`,
+            [
+              { header: 'Name', get: (p: Personnel) => p.name },
+              { header: 'Email', get: (p: Personnel) => p.email },
+              { header: 'Department', get: (p: Personnel) => p.department?.name },
+              { header: 'Phone', get: (p: Personnel) => p.phone },
+              { header: 'Active Devices', get: (p: Personnel) => p.assignments?.length || 0 },
+            ],
+            rows
+          )}
+          disabled={rows.length === 0}
+          className="flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition disabled:opacity-50 self-start"
+        >
+          <Download size={16} /> Export CSV
+        </button>
       </div>
 
       {/* Horizontal Tabs */}
@@ -183,6 +207,7 @@ export default function PersonnelPage() {
           {/* Personnel table */}
           <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             {isLoading ? <div className="p-8 text-center text-slate-400">Loading...</div> :
+              isPersonnelError ? <div className="p-8 text-center text-red-600 dark:text-red-400">Personnel could not be loaded. Please try again.</div> :
               rows.length === 0 ? <div className="p-12 text-center text-slate-400">No personnel found</div> : (
                 <>
                   {/* Desktop table */}

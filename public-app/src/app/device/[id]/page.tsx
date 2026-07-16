@@ -7,11 +7,6 @@ interface CustomValue {
   customField: { label: string; order: number; fieldType: string }
 }
 
-interface Assignment {
-  assignedAt: string
-  personnel: { name: string; department: { name: string } }
-}
-
 interface Device {
   id: string
   name: string
@@ -21,7 +16,6 @@ interface Device {
   category: { name: string }
   brand: { name: string } | null
   customValues: CustomValue[]
-  assignments: Assignment[]
 }
 
 async function getDevice(id: string): Promise<Device | null> {
@@ -48,7 +42,6 @@ export default async function DevicePage({ params }: { params: { id: string } })
   if (!device) notFound()
 
   const status = statusConfig[device.status]
-  const activeAssignment = device.assignments[0] || null
   const hostname = (headers().get('host') || 'localhost:3000').split(':')[0]
   const adminPort = process.env.FRONTEND_PORT || '3001'
   const frontendUrl = process.env.FRONTEND_URL || `http://${hostname}:${adminPort}`
@@ -89,11 +82,6 @@ export default async function DevicePage({ params }: { params: { id: string } })
           <div className="px-6 py-4 border-b border-slate-100">
             <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${status.color} w-full`} style={status.style}>
               <span className="text-sm font-semibold" style={{ color: status.style.color }}>{status.label}</span>
-              {activeAssignment && (
-                <span className="ml-auto text-sm" style={{ color: status.style.color }}>
-                  {activeAssignment.personnel.name} — {activeAssignment.personnel.department.name}
-                </span>
-              )}
             </div>
           </div>
 

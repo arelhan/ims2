@@ -11,7 +11,7 @@ export default function NewDevicePage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const [form, setForm] = useState<any>({
-    name: '', serialNumber: '', categoryId: '',
+    name: '', serialNumber: '', categoryId: '', brandId: '',
     status: 'IN_WAREHOUSE', purchaseDate: '', notes: '',
   })
   const [customValues, setCustomValues] = useState<Record<string, string>>({})
@@ -23,6 +23,11 @@ export default function NewDevicePage() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => (await api.get('/categories')).data,
+  })
+
+  const { data: brands = [] } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => (await api.get('/brands')).data,
   })
 
   const { data: personnel = [] } = useQuery({
@@ -60,15 +65,9 @@ export default function NewDevicePage() {
 
   const mutation = useMutation({
     mutationFn: async (data: any) => (await api.post('/devices', data)).data,
-    onSuccess: async (device) => {
-      if (form.status === 'ASSIGNED' && assignPersonnelId) {
-        try {
-          await api.post('/assignments', { deviceId: device.id, personnelId: assignPersonnelId })
-        } catch (err: any) {
-          setError(err.response?.data?.error || 'Device created but assignment failed')
-        }
-      }
+    onSuccess: (device) => {
       queryClient.invalidateQueries({ queryKey: ['devices'] })
+      queryClient.invalidateQueries({ queryKey: ['assignments'] })
       router.push(`/devices/${device.id}`)
     },
     onError: (err: any) => setError(err.response?.data?.error || 'Failed to create device'),
@@ -78,7 +77,8 @@ export default function NewDevicePage() {
     e.preventDefault()
     const data = {
       ...form,
-      status: form.status === 'ASSIGNED' ? 'IN_WAREHOUSE' : form.status,
+      brandId: form.brandId || undefined,
+      assignedToPersonnelId: form.status === 'ASSIGNED' ? assignPersonnelId : undefined,
       purchaseDate: form.purchaseDate || undefined,
       customValues: Object.entries(customValues).map(([customFieldId, value]) => ({ customFieldId, value })),
     }
@@ -119,7 +119,10 @@ export default function NewDevicePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
-              <select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })}
+              <select required value={form.categoryId} onChange={e => {
+                setForm({ ...form, categoryId: e.target.value })
+                setCustomValues({})
+              }}
                 className={inputCls}>
                 <option value="">Select category</option>
                 {(categories as any[]).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -135,6 +138,14 @@ export default function NewDevicePage() {
                 <option value="RETIRED">Retired</option>
               </select>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Brand</label>
+            <select value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })} className={inputCls}>
+              <option value="">No brand</option>
+              {(brands as any[]).map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
           </div>
 
           {form.status === 'ASSIGNED' && (
@@ -212,7 +223,7 @@ export default function NewDevicePage() {
           </div>
         )}
 
-        <button type="submit" disabled={mutation.isPending}
+        <button type="submit" disabled={mutation.isPending || (form.status === 'ASSIGNED' && !assignPersonnelId)}
           className="w-full bg-slate-900 dark:bg-sky-600 text-white rounded-xl py-2.5 text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition disabled:opacity-50">
           {mutation.isPending ? 'Creating...' : 'Create Device'}
         </button>

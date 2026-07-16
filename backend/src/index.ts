@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { config } from './lib/config'
 import express from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
@@ -19,28 +20,57 @@ import { getServerIP } from './lib/qr'
 import { errorMiddleware } from './middleware/error.middleware'
 import { verifyToken } from './middleware/auth.middleware'
 import { requireAdmin } from './middleware/admin.middleware'
+import { securityHeaders } from './middleware/security'
+import { apiLimiter } from './middleware/rateLimit'
 import * as deviceController from './controllers/device.controller'
 
 const app = express()
+app.disable('x-powered-by')
+// Trust the first proxy hop so req.ip reflects the real client (rate limiting).
+app.set('trust proxy', 1)
 
 const allowedOrigins = [
   process.env.ADMIN_PANEL_URL || 'http://localhost:3001',
   process.env.PUBLIC_APP_URL || 'http://localhost:3002',
-]
+].filter(Boolean)
 
+// Only the app's own ports are relevant; the host must be loopback or a
+// private LAN address (this tool is designed for LAN use with a dynamic IP).
+const APP_PORTS = new Set(['3001', '3002'])
+
+function isPrivateHost(hostname: string): boolean {
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1') return true
+  // IPv4 private ranges: 10.x, 192.168.x, 172.16–172.31.x
+  if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true
+  if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(hostname)) return true
+  const m = hostname.match(/^172\.(\d{1,3})\.\d{1,3}\.\d{1,3}$/)
+  if (m) {
+    const second = Number(m[1])
+    if (second >= 16 && second <= 31) return true
+  }
+  return false
+}
+
+function isAllowedOrigin(origin: string): boolean {
+  if (allowedOrigins.includes(origin)) return true
+  try {
+    const { hostname, port } = new URL(origin)
+    return APP_PORTS.has(port) && isPrivateHost(hostname)
+  } catch {
+    return false
+  }
+}
+
+app.use(securityHeaders)
 app.use(cors({
   origin: (origin, callback) => {
+    // Same-origin / server-to-server requests have no Origin header.
     if (!origin) return callback(null, true)
-    try {
-      const { port } = new URL(origin)
-      if (port === '3001' || port === '3002') return callback(null, true)
-      if (allowedOrigins.includes(origin)) return callback(null, true)
-    } catch {}
-    callback(null, false)
+    callback(null, isAllowedOrigin(origin))
   },
   credentials: true,
 }))
-app.use(express.json())
+app.use(express.json({ limit: '1mb' }))
 app.use(cookieParser())
 
 // Health check
@@ -52,6 +82,9 @@ app.get('/api/health', (_req, res) => {
 app.get('/api/config', (_req, res) => {
   res.json({ publicBaseUrl: getServerIP() })
 })
+
+// Broad limiter across the API surface.
+app.use('/api', apiLimiter)
 
 // Public routes — no auth
 app.use('/api/public', publicRoutes)
@@ -89,7 +122,7 @@ function getNetworkIP(): string | null {
   return null
 }
 
-const PORT = Number(process.env.PORT) || 4000
+const PORT = config.port
 app.listen(PORT, '0.0.0.0', () => {
   const ip = getNetworkIP()
   console.log('')

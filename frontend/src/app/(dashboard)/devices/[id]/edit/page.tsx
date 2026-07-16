@@ -24,6 +24,11 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
     queryFn: async () => (await api.get('/categories')).data,
   })
 
+  const { data: brands = [] } = useQuery({
+    queryKey: ['brands'],
+    queryFn: async () => (await api.get('/brands')).data,
+  })
+
   const { data: fields = [] } = useQuery({
     queryKey: ['fields', form?.categoryId],
     queryFn: async () => (await api.get(`/categories/${form.categoryId}/fields`)).data,
@@ -36,6 +41,7 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
         name: device.name,
         serialNumber: device.serialNumber,
         categoryId: device.categoryId,
+        brandId: device.brandId || '',
         status: device.status,
         purchaseDate: device.purchaseDate ? device.purchaseDate.split('T')[0] : '',
         notes: device.notes || '',
@@ -64,6 +70,7 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
     e.preventDefault()
     const data = {
       ...form,
+      brandId: form.brandId || null,
       purchaseDate: form.purchaseDate || null,
       customValues: Object.entries(customValues).map(([customFieldId, value]) => ({ customFieldId, value })),
     }
@@ -100,7 +107,10 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category *</label>
-              <select required value={form.categoryId} onChange={e => setForm({ ...form, categoryId: e.target.value })}
+              <select required value={form.categoryId} onChange={e => {
+                setForm({ ...form, categoryId: e.target.value })
+                setCustomValues({})
+              }}
                 className={inputCls}>
                 {(categories as any[]).map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
@@ -110,11 +120,23 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
               <select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })}
                 className={inputCls}>
                 <option value="IN_WAREHOUSE">In Warehouse</option>
-                <option value="ASSIGNED">Assigned</option>
+                {/* Assigned is set via the assignment action, not editable here */}
+                {form.status === 'ASSIGNED' && <option value="ASSIGNED">Assigned</option>}
                 <option value="MAINTENANCE">Maintenance</option>
                 <option value="RETIRED">Retired</option>
               </select>
+              {form.status === 'ASSIGNED' && (
+                <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Changing away from Assigned will return the device.</p>
+              )}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Brand</label>
+            <select value={form.brandId} onChange={e => setForm({ ...form, brandId: e.target.value })} className={inputCls}>
+              <option value="">No brand</option>
+              {(brands as any[]).map((b: any) => <option key={b.id} value={b.id}>{b.name}</option>)}
+            </select>
           </div>
 
           <div>
@@ -136,7 +158,7 @@ export default function EditDevicePage({ params }: { params: { id: string } }) {
             {(fields as any[]).map((field: any) => (
               <div key={field.id}>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  {field.label}
+                  {field.label} {field.isRequired && <span className="text-red-500">*</span>}
                 </label>
                 <CustomFieldInput
                   field={field}

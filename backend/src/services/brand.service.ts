@@ -16,5 +16,9 @@ export async function updateBrand(id: string, data: { name: string }) {
 }
 
 export async function deleteBrand(id: string) {
+  const count = await prisma.device.count({ where: { brandId: id } })
+  if (count > 0) {
+    throw { status: 400, message: `Cannot delete: ${count} device(s) are using this brand` }
+  }
   return prisma.brand.delete({ where: { id } })
 }

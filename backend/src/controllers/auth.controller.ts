@@ -1,15 +1,21 @@
 import { Request, Response, NextFunction } from 'express'
 import * as authService from '../services/auth.service'
 import { AuthRequest } from '../middleware/auth.middleware'
+import { config } from '../lib/config'
+
+const COOKIE_OPTS = {
+  httpOnly: true,
+  secure: config.cookieSecure,
+  sameSite: 'lax' as const,
+  path: '/',
+}
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { username, password } = req.body
     const { token, user } = await authService.login(username, password)
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.COOKIE_SECURE === 'true',
-      sameSite: 'lax',
+      ...COOKIE_OPTS,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     res.json({ user })
@@ -19,7 +25,8 @@ export async function login(req: Request, res: Response, next: NextFunction) {
 }
 
 export async function logout(_req: Request, res: Response) {
-  res.clearCookie('token')
+  // Clear with the same options the cookie was set with, or some browsers keep it.
+  res.clearCookie('token', COOKIE_OPTS)
   res.json({ success: true })
 }
 

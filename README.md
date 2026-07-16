@@ -4,12 +4,24 @@ Office electronics tracking system. Built with Next.js 14, Express, Prisma, and 
 
 ## Features
 
-- Device management with custom fields per category
-- Personnel tracking and device assignments
+- Device management with custom fields per category (add / edit / reorder fields)
+- Brand management, with brand selection on devices
+- Personnel tracking, bulk CSV import, and device assignments
 - Assignment history (audit log)
-- QR codes linking to public device info pages
-- Backup & restore (SQLite)
-- Mobile responsive
+- CSV export for devices and personnel
+- QR codes linking to public device info pages (no PII exposed)
+- Backup & restore (SQLite) with automatic pre-restore snapshots
+- Self-service password change + admin password reset
+- Mobile responsive, light/dark theme
+
+## Security
+
+- Input validation on every write endpoint (zod)
+- Rate limiting on auth endpoints and the API surface
+- Security headers; strict CORS (loopback/LAN origins only)
+- The backend **refuses to start in production** with an empty, default, or weak
+  `JWT_SECRET`. Generate one with `openssl rand -base64 48`.
+- Set `COOKIE_SECURE=true` when serving over HTTPS.
 
 ## Project Structure
 

@@ -22,7 +22,10 @@ export async function deleteCategory(id: string) {
   if (count > 0) {
     throw { status: 400, message: `Cannot delete: ${count} device(s) are using this category` }
   }
-  return prisma.category.delete({ where: { id } })
+  return prisma.$transaction(async tx => {
+    await tx.customField.deleteMany({ where: { categoryId: id } })
+    return tx.category.delete({ where: { id } })
+  })
 }
 
 export async function getFields(categoryId: string) {
@@ -68,7 +71,16 @@ export async function deleteField(categoryId: string, fieldId: string) {
 }
 
 export async function reorderFields(categoryId: string, orderedIds: string[]) {
-  await Promise.all(
+  const fields = await prisma.customField.findMany({
+    where: { categoryId },
+    select: { id: true },
+  })
+  const currentIds = new Set(fields.map(field => field.id))
+  if (orderedIds.length !== currentIds.size || new Set(orderedIds).size !== orderedIds.length || orderedIds.some(id => !currentIds.has(id))) {
+    throw { status: 400, message: 'Field order must include every field in the category exactly once' }
+  }
+
+  await prisma.$transaction(
     orderedIds.map((id, index) =>
       prisma.customField.update({
         where: { id, categoryId },

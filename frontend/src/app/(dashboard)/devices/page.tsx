@@ -2,25 +2,27 @@
 import { useQuery } from '@tanstack/react-query'
 import api from '@/lib/api'
 import Link from 'next/link'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Download } from 'lucide-react'
 import { useState } from 'react'
-import { STATUS_COLORS, STATUS_LABELS, formatDate } from '@/lib/utils'
+import { STATUS_COLORS, STATUS_LABELS, formatDate, exportToCsv } from '@/lib/utils'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 
 export default function DevicesPage() {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState('')
   const [categoryId, setCategoryId] = useState('')
+  const debouncedSearch = useDebouncedValue(search)
 
   const { data: categories = [] } = useQuery({
     queryKey: ['categories'],
     queryFn: async () => (await api.get('/categories')).data,
   })
 
-  const { data: devices = [], isLoading } = useQuery({
-    queryKey: ['devices', search, status, categoryId],
+  const { data: devices = [], isLoading, isError } = useQuery({
+    queryKey: ['devices', debouncedSearch, status, categoryId],
     queryFn: async () => {
       const params = new URLSearchParams()
-      if (search) params.set('search', search)
+      if (debouncedSearch) params.set('search', debouncedSearch)
       if (status) params.set('status', status)
       if (categoryId) params.set('categoryId', categoryId)
       return (await api.get(`/devices?${params}`)).data
@@ -29,6 +31,22 @@ export default function DevicesPage() {
 
   const deviceRows = devices as any[]
 
+  function handleExport() {
+    exportToCsv(
+      `devices-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        { header: 'Name', get: (d: any) => d.name },
+        { header: 'Serial Number', get: (d: any) => d.serialNumber },
+        { header: 'Category', get: (d: any) => d.category?.name },
+        { header: 'Brand', get: (d: any) => d.brand?.name },
+        { header: 'Status', get: (d: any) => STATUS_LABELS[d.status] || d.status },
+        { header: 'Assigned To', get: (d: any) => d.assignments?.[0]?.personnel?.name },
+        { header: 'Added', get: (d: any) => formatDate(d.createdAt) },
+      ],
+      deviceRows
+    )
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -36,12 +54,21 @@ export default function DevicesPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Devices</h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-0.5">{deviceRows.length} total devices</p>
         </div>
-        <Link
-          href="/devices/new"
-          className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition sm:w-auto"
-        >
-          <Plus size={16} /> Add Device
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExport}
+            disabled={deviceRows.length === 0}
+            className="flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 transition disabled:opacity-50"
+          >
+            <Download size={16} /> Export CSV
+          </button>
+          <Link
+            href="/devices/new"
+            className="flex items-center justify-center gap-2 bg-slate-900 dark:bg-sky-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 dark:hover:bg-sky-500 transition sm:w-auto"
+          >
+            <Plus size={16} /> Add Device
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -81,6 +108,8 @@ export default function DevicesPage() {
       <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-slate-400 dark:text-slate-500">Loading...</div>
+        ) : isError ? (
+          <div className="p-8 text-center text-red-600 dark:text-red-400">Devices could not be loaded. Please try again.</div>
         ) : deviceRows.length === 0 ? (
           <div className="p-12 text-center text-slate-400 dark:text-slate-500">No devices found</div>
         ) : (
